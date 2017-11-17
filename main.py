@@ -14,6 +14,10 @@ def faq():
 def about():
     return render_template('about.html')
 
-@app.route('/create-account')
-def create_account():
-    return render_template('create-account.html')
+@app.route('/account/choose-account')
+def choose_account():
+    return render_template('accounts/choose-account.html')
+
+@app.route('/account/secure-account')
+def secure_account():
+    return render_template('accounts/secure-account.html')
