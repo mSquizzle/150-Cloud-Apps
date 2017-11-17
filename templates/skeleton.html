@@ -1,26 +1,31 @@
 <html>
-        <head>
-                <title>MRS Blood System</title>
-                <link rel="shortcut icon" href="/static/blood.png" type="image/x-icon">
-                <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <head>
+        <title>MRS Blood System</title>
+        <link rel="shortcut icon" href="/static/blood.png" type="image/x-icon">
+        <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g=" crossorigin="anonymous"></script>
+        <script src="https://use.fontawesome.com/7b073fbc87.js"></script>
 
-                <!-- internal styling -->
-                <style>
-                .page-header h1 {
-                        text-align: center;
-                }
-                </style>
-        </head>
-        <body>
+        <!-- internal styling -->
+        <style>
+            .page-header h1 {
+                 text-align: center;
+            }
+        </style>
+    </head>
+
+    <body>
         {% block nav %}
         {% endblock%}
 
+        <div style="margin: 0 10%;">
         {% block body %}
         {% endblock %}
+        </div>
 
         {% block footer %}
         {% endblock %}
-        </body>
+    </body>
 </html>
 

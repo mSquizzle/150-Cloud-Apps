@@ -13,3 +13,7 @@ def faq():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+@app.route('/create-account')
+def create_account():
+    return render_template('create-account.html')
