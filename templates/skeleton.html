@@ -1,13 +1,25 @@
 <html>
         <head>
                 <title>MRS Blood System</title>
+                <link rel="shortcut icon" href="/static/blood.png" type="image/x-icon">
                 <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
                 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+                <!-- internal styling -->
+                <style>
+                .page-header h1 {
+                        text-align: center;
+                }
+                </style>
         </head>
         <body>
         {% block nav %}
         {% endblock%}
+
         {% block body %}
+        {% endblock %}
+
+        {% block footer %}
         {% endblock %}
         </body>
 </html>
