@@ -2,9 +2,13 @@
     <head>
         <title>MRS Blood System</title>
         <link rel="shortcut icon" href="/static/blood.png" type="image/x-icon">
+        <!-- Bootstrap CSS CDN -->
         <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <!-- jQuery CDN -->
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g=" crossorigin="anonymous"></script>
+        <!-- Bootstrap JS CDN (relies on jQuery) -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <!-- Font Awesome CDN -->
         <script src="https://use.fontawesome.com/7b073fbc87.js"></script>
 
         <!-- internal styling -->
@@ -19,7 +23,21 @@
         {% block nav %}
         {% endblock%}
 
+        <!-- add side margins for main body -->
         <div style="margin: 0 10%;">
+
+        <!-- flash any messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-dismissable {{ category }}" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
         {% block body %}
         {% endblock %}
         </div>
