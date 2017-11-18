@@ -6,6 +6,15 @@ threadsafe: true
 handlers:
 - url: /static
   static_dir: static
+
+- url: /prefs
+  script: prefs.application
+  login: required
+ 
 - url: /.*
   script: main.app
 # [END handlers]
+
+libraries:
+- name: webapp2
+  version: "2.5.2"
