@@ -9,4 +9,19 @@ Once done, the app can be started with `dev_appserver.py app.yaml`. It sets Flas
 ## Deploying
 `appengine_config.py` tells the Google App Engine to look in the folder `lib/` for vendor libraries. The production runtime includes some [third party libraries](https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27) but any others should be included in this folder before uploading the project. These external libraries are kept up to date in the `requirements.txt` file.
 
-To populare or update the libraries directory, run `pip install -t lib -r requirements.txt` from a virtual environment.
+## Deploying
+`appengine_config.py` tells the Google App Engine to look in the folder `lib/` for vendor libraries. The production runtime includes some [third party libraries](https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27) but any others should be included in this folder before uploading the project. These external libraries are kept up to date in the `requirements.txt` file.
+
+To populate or update the libraries directory, run `pip install -t lib -r requirements.txt` from a virtual environment.
+
+Note that for Windows users, you may run into issues related to Flask. If you are running into problems because you cannot import msvcrt, you can go into `appengine_config.py` and add the following after `from google.appengine.ext import vendor`:
+
+```import os
+ import sys
+
+ if os.environ.get('SERVER_SOFTWARE', '').startswith('Google App Engine'):
+   sys.path.insert(0, 'lib')
+ else:
+   if os.name == 'nt':
+     os.name = None
+```
