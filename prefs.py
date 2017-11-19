@@ -1,12 +1,11 @@
 import webapp2
+from google.appengine.api import users
 
 import models
 
 class PrefsPage(webapp2.RequestHandler):
     def post(self):
         userprefs = models.get_userprefs()
-		success = False
-		success_message = "Failed to update profile"
         try:
             first_name = self.request.get('first_name')
             userprefs.first_name = first_name
@@ -26,19 +25,13 @@ class PrefsPage(webapp2.RequestHandler):
             userprefs.state = state
             zip_code = self.request.get('zip_code')
             userprefs.zip_code = zip_code
+            userprefs.email = users.get_current_user().email()
             userprefs.put()
-			success = True
-			success_message = "Profile updated!"
         except ValueError:
             # User did somethin weird
             pass
 
-        self.response.headers['Content-Type'] = 'application/json'
-        obj = {
-            'success': success,
-            'message': success_message
-        }
-        self.response.out.write(json.dumps(obj))
+        self.redirect('/')
 
 application = webapp2.WSGIApplication([('/prefs', PrefsPage)],
                                       debug=True)

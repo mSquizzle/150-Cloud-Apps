@@ -10,7 +10,15 @@ handlers:
 - url: /prefs
   script: prefs.application
   login: required
- 
+
+- url: /sendemail
+  script: sendemail.application
+  login: required
+
+- url : /emailadmin.html
+  script : emailadmin.application
+  login : required
+
 - url: /.*
   script: main.app
 # [END handlers]
@@ -18,3 +26,5 @@ handlers:
 libraries:
 - name: webapp2
   version: "2.5.2"
+- name: jinja2
+  version: "2.6"
