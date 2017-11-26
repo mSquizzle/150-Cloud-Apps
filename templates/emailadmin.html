@@ -1,12 +1,32 @@
-<html>
-  <head>
-    <title>Send a message to outreach to potential donors</title>
-      <script src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=oi1h5eercka6ep3282vhbmznnqdjusxha5gziqz2weuwxvah"></script>
+{% extends "layout.html" %}
+{% block body %}
+    <div class="page-header">
+            <h1>Test and Send Emails</h1>
+    </div>
+    {% if user %}
+    <div class="form-group">
+        <form action="/sendemail" id="usrform" method="post">
+            Send Address:
+            <input type="email" name="send_address" required class="form-control"><br/>
+            Subject:
+            <input type="text" name="email_subject" required class="form-control"><br/>
+            Body:
+            <textarea rows="4" cols="50" name="email_body" form="usrform" required class="form-control">
+                Enter text here...
+            </textarea><br/>
+            <input type="submit" class="btn">
+        </form><br/>
+    </div>
+   {% else %}
+    <h1> You must be logged in to view this page.</h1>
+    {% endif %}
+{% endblock %}
+{% block footer %}
+    <script src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=oi1h5eercka6ep3282vhbmznnqdjusxha5gziqz2weuwxvah"></script>
       <script>
         tinymce.init({
             selector: 'textarea',
             height: 300,
-            width: 500,
             menubar: false,
             plugins: [
                 'advlist autolink lists link textcolor',
@@ -31,20 +51,4 @@
             }
         });
     </script>
-  </head>
-  <body>
-  {% if user %}
-    <form action="/sendemail" id="usrform" method="post">
-        Send Address:
-        <input type="email" name="send_address" required><br/>
-        Subject:
-        <input type="text" name="email_subject" required><br/>
-        Body:
-        <textarea rows="4" cols="50" name="email_body" form="usrform" required>
-            Enter text here...
-        </textarea><br/>
-        <input type="submit">
-    </form><br/>
-   {% endif %}
-  </body>
-</html>
+{% endblock %}

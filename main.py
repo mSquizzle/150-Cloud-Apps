@@ -19,29 +19,54 @@ class Alert:
     warning = "alert-warning"
     danger = "alert-danger"
 
+def get_base_env():
+    user = users.get_current_user()
+    logout_url = users.create_logout_url("/")
+    env = {"user": user, "logout_url": logout_url}
+    return env
+
+
 @app.route('/')
 def index():
     flash('This is a test', Alert.info)
-    return render_template('index.html')
+    #user = users.get_current_user()
+    #logout_url = users.create_logout_url("/")
+    env = get_base_env()
+    return render_template('index.html', **env)
 
 @app.route('/faq')
 def faq():
-    return render_template('faq.html')
+    env = get_base_env()
+    return render_template('faq.html', **env)
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    env = get_base_env()
+    return render_template('about.html', **env)
 
 @app.route('/account/choose-account')
 def choose_account():
+    env = get_base_env()
     return_url = url_for("index")
-    env = {"login_url": users.create_login_url(return_url)}
+    env["login_url"] = users.create_login_url(return_url)
     return render_template('accounts/choose-account.html', **env)
 
 @app.route('/account/secure-account')
 def secure_account():
-    return render_template('accounts/secure-account.html')
+    env = get_base_env()
+    return render_template('accounts/secure-account.html', **env)
 
 @app.route('/account/create-account')
 def create_account():
-    return render_template('accounts/create-account.html')
+    env = get_base_env()
+    return render_template('accounts/create-account.html', **env)
+
+@app.route('/settings')
+def settings():
+    env = get_base_env()
+    return render_template('settings.html', **env)
+
+@app.route("/emailadmin")
+def emailadmin():
+    env = get_base_env()
+    return render_template('emailadmin.html', **env)
