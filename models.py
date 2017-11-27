@@ -21,6 +21,14 @@ class DonorUserPrefs(db.Model):
     user_id = db.IntegerProperty()
     user = db.UserProperty(auto_current_user_add=True)
 
+def get_userpref_by_email(email=None):
+    if email:
+        q = DonorUserPrefs.all()
+        q.filter("email =", email)
+        userpref = q.get()
+        return userpref
+    return None
+
 def get_userprefs(user_id=None):
     if not user_id:
         user = users.get_current_user()
