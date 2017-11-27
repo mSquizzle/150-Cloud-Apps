@@ -26,12 +26,18 @@
         <!-- active left navigation -->
         <li class="active"><a href="#">Somewhere <span class="sr-only">(current)</span></a></li>
       </ul>
-
+        {% if user %}
+        <!-- only show when not signed in -->
+      <div class="nav navbar-right">
+          <a href="{{ url_for('settings') }}"><button type="button" class="btn btn-default navbar-btn">Settings</button></a>
+          <a href="{{ logout_url }}"><button type="button" class="btn btn-default navbar-btn">Sign Out</button></a>
+      </div>
+        {% else %}
       <div class="nav navbar-right">
           <a href="{{ url_for('choose_account') }}"><button type="button" class="btn btn-default navbar-btn">Create Account</button></a>
           <a href="#"><button type="button" class="btn btn-default navbar-btn">Sign In</button></a>
       </div>
-
+        {% endif %}
     </div>
   </div>
 </nav>
