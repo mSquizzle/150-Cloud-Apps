@@ -28,14 +28,19 @@
       </ul>
 
       <div class="nav navbar-right">
+          {% if account['user'] %}
+            <a href="{{ account['logout'] }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a>
+          {% else %}
           <a href="{{ url_for('choose_account') }}"><button type="button" class="btn btn-default navbar-btn">Create Account</button></a>
-          <a href="#"><button type="button" class="btn btn-default navbar-btn">Sign In</button></a>
+          <a href="{{ account['login'] }}"><button type="button" class="btn btn-default navbar-btn">Sign In</button></a>
+          {% endif %}
       </div>
 
     </div>
   </div>
 </nav>
 {% endblock %}
+
 
 <!-- TODO: add padding if necessary -->
 {% block footer %}
