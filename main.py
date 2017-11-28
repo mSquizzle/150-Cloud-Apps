@@ -91,10 +91,12 @@ def bank_profile(bank_id):
 
 @app.route('/settings')
 def settings():
-    env = get_base_env()
-    return render_template('settings.html', **env)
+    return render_template(
+        'settings.html',
+        account=get_account())
 
 @app.route("/emailadmin")
 def emailadmin():
-    env = get_base_env()
-    return render_template('emailadmin.html', **env)
+    return render_template(
+        'emailadmin.html',
+        account=get_account())
