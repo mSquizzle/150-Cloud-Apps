@@ -1,0 +1,68 @@
+#Database set up 
+
+CREATE DATABASE mrs;
+USE mrs;
+
+#adding tables to db
+
+CREATE TABLE donor (
+    donor_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(128) NOT NULL,
+    last_name VARCHAR(128) NOT NULL,
+    phone_number VARCHAR(10) NOT NULL, #assuming US phone numbers only
+    email VARCHAR(128) NOT NULL,
+    blood_type VARCHAR(5),
+    address_1 VARCHAR(128) NOT NULL,
+    address_2 VARCHAR(128), 
+    city VARCHAR(128) NOT NULL,
+    state VARCHAR(128)NOT NULL,
+    zipcode VARCHAR(5) NOT NULL,
+    last_Donation DATE, 
+    eligibility_status ENUM('Eligible', 'Not Eligible', 'Unknown') DEFAULT 'Unknown', 
+    notification_preference ENUM('Email', 'Text', 'Phone', 'None') DEFAULT 'Email',
+    receive_outreach_msg ENUM('YES', 'NO') default 'YES'
+    );
+
+CREATE TABLE bank (
+    bank_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    short_name VARCHAR(128) NOT NULL,
+    full_name VARCHAR(128) NOT NULL,
+    phone_number VARCHAR(10) NOT NULL, #assuming US phone numbers only
+    email VARCHAR(128) NOT NULL,
+    address_1 VARCHAR(128) NOT NULL,
+    address_2 VARCHAR(128), 
+    city VARCHAR(128) NOT NULL,
+    state VARCHAR(128)NOT NULL,
+    zipcode VARCHAR(5) NOT NULL,
+    O_neg INT DEFAULT 0,
+    O_pos INT DEFAULT 0,
+    A_neg INT DEFAULT 0,
+    A_pos INT DEFAULT 0,
+    B_neg INT DEFAULT 0,
+    B_pos INT DEFAULT 0,
+    AB_neg INT DEFAULT 0, 
+    AB_pos INT DEFAULT 0
+    );
+
+CREATE TABLE hospital (
+    hospital_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    short_name VARCHAR(128) NOT NULL,
+    full_name VARCHAR(128) NOT NULL,
+    phone_number VARCHAR(10) NOT NULL, #assuming US phone numbers only
+    email VARCHAR(128) NOT NULL,
+    address_1 VARCHAR(128) NOT NULL,
+    address_2 VARCHAR(128), 
+    city VARCHAR(128) NOT NULL,
+    state VARCHAR(128)NOT NULL,
+    zipcode VARCHAR(5) NOT NULL,
+    O_neg INT DEFAULT 0,
+    O_pos INT DEFAULT 0,
+    A_neg INT DEFAULT 0,
+    A_pos INT DEFAULT 0,
+    B_neg INT DEFAULT 0,
+    B_pos INT DEFAULT 0,
+    AB_neg INT DEFAULT 0, 
+    AB_pos INT DEFAULT 0
+    );
+
+
