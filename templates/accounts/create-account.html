@@ -4,5 +4,12 @@
     <h1>Create Institutional Account</h1>
 </div>
 
-Lorem ipsum
+<form method="post" action="{{ url_for('create_account') }}">
+    <input type="text" name="institution" class="form-control" placeholder="Institution Name">
+    <input type="text" name="email" class="form-control" placeholder="Email">
+    <input type="password" name="pass" class="form-control" placeholder="Password">
+    <input type="password" name="repeat_pass" class="form-control" placeholder="Password">
+    <input type="submit" value="Submit">
+</form>
+
 {% endblock %}

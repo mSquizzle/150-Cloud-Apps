@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+
 import os, logging, email
 from google.appengine.api import users
 
@@ -73,12 +75,17 @@ def secure_account():
         account=get_account()
     )
 
-@app.route('/account/create-account')
+@app.route('/account/create-account', methods=['GET', 'POST'])
 def create_account():
-    return render_template(
-        'accounts/create-account.html',
-        account=get_account()
-    )
+    if request.method == 'POST':
+        password = request.form['pass']
+        return  password
+    else:
+        # handle get request
+        return render_template(
+            'accounts/create-account.html',
+            account=get_account()
+        )
 
 @app.route('/bank/<int:bank_id>')
 def bank_profile(bank_id):
