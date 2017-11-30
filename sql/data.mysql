@@ -1,0 +1,31 @@
+#all data is fake 
+#add donors to donor table
+INSERT INTO donor (first_name, last_name, phone_number, email, blood_type, address_1, address_2, city, state, zipcode, last_Donation) 
+  VALUES('sonal', 'c', '9786174567', 'abcd@gmail.com', 'O+', '161 college ave', 'collab room', 'Medford', 'MA', '02155', '2017-12-30');
+  
+  INSERT INTO donor (first_name, last_name, phone_number, email, address_1, city, state, zipcode) 
+  VALUES ('Cardinal', 'Rose', '1239874567', 'hello@world.com', 'Cloud Lane', 'app engine', 'GG', '12345');
+
+
+  INSERT INTO donor (first_name, last_name, phone_number, email, address_1, city, state, zipcode) 
+  VALUES ('Jon', 'Snow', '1239874567', 'jsnow@thewall.com', '1 King’s Road', 'Castle Black', 'WL', '11111');
+
+  INSERT INTO donor (first_name, last_name, phone_number, email, address_1, city, state, zipcode, blood_type) 
+  VALUES ('Jaqen', 'H’ghar', '1239193567', 'jhghar@faceless.com', '27 Mercy Lane', 'Temple of Black and White', 'BV', '11511', 'B+');
+
+  INSERT INTO donor (first_name, last_name, phone_number, email, address_1, city, state, zipcode) 
+  VALUES ('Sirius', 'Black', '6739874567', 'sblack@padfoot.com', '16 Grimmauld Place', 'London', 'LD', '49372');
+
+#add banks to db
+INSERT INTO bank (short_name, full_name, phone_number, email, address_1, city, state, zipcode, O_neg, O_pos, A_neg, A_pos, B_neg, B_pos, AB_neg, AB_pos)
+VALUES ('BB', 'Beautiful Blood', '9784309876', 'admin@bblood.org', '123 Main St', 'Boston', 'MA', '01274', 10, 10, 10, 1000, 100, 1000, 100, 100);
+
+INSERT INTO bank (short_name, full_name, phone_number, email, address_1, city, state, zipcode, O_neg, O_pos, A_neg, A_pos, B_neg, B_pos, AB_neg, AB_pos)
+VALUES ('MDRC', 'Medford Red Cross', '6174309876', 'admin@mdrc.org', '123 College Ave', 'Medford', 'MA', '02155', 100, 100, 10, 100, 100, 1000, 100, 100);
+
+
+#add hospital to table 
+
+INSERT INTO hospital (short_name, full_name, phone_number, email, address_1, city, state, zipcode, O_neg, O_pos, A_neg, A_pos, B_neg, B_pos, AB_neg, AB_pos)
+VALUES ('MGH', 'Massachusetts General Hospital', '6173458920', 'admin@mgh.org', '55 Fruit St', 'Boston', 'MA', '02111', 100, 100, 100, 100, 100, 100, 100, 100);
+  
