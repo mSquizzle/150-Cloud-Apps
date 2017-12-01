@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 
-import os, logging, email
+import os, logging, re
 from google.appengine.api import users
 
 app = Flask (__name__)
@@ -78,8 +78,16 @@ def secure_account():
 @app.route('/account/create-account', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'POST':
-        password = request.form['pass']
-        return  password
+        form = request.form
+        # quick validation
+        if form['pass'] != form['repeat_pass']:
+            flash('Passwords do not match', Alert.warning)
+        if not re.match(r'[^@]+@[^@]+\.[^@]+', form['email']):
+            flash('Invalid email format', Alert.warning)
+        return render_template(
+            'accounts/create-account.html',
+            account=get_account()
+        )
     else:
         # handle get request
         return render_template(

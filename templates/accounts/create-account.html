@@ -5,11 +5,33 @@
 </div>
 
 <form method="post" action="{{ url_for('create_account') }}">
-    <input type="text" name="institution" class="form-control" placeholder="Institution Name">
-    <input type="text" name="email" class="form-control" placeholder="Email">
-    <input type="password" name="pass" class="form-control" placeholder="Password">
-    <input type="password" name="repeat_pass" class="form-control" placeholder="Password">
-    <input type="submit" value="Submit">
+    <label for="radio-buttons">Institution Type:</label>
+    <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
+        <label for="hospital" class="btn btn-primary"><input type="radio" name="institution_type" id="hospital" value="hospital">Hospital</label>
+        <label for="blood_bank" class="btn btn-primary"><input type="radio" name="institution_type" id="blood_bank" value="blood_bank">Blood Bank</label>
+    </div>
+
+    <div class="form-group">
+        <label for="institution">Institution:</label>
+        <input type="text" id="institution" name="institution" class="form-control" placeholder="Institution">
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="text" id="email" name="email" class="form-control" placeholder="me@example.com">
+    </div>
+
+    <div class="form-group">
+        <label for="email">Password:</label>
+        <input type="password" id="pass" name="pass" class="form-control">
+    </div>
+
+    <div class="form-group">
+        <label for="email">Repeat Password:</label>
+        <input type="password" id="repeat_pass" name="repeat_pass" class="form-control">
+    </div>
+
+    <input type="submit" class="btn btn-primary btn-large" value="Submit">
 </form>
 
 {% endblock %}
