@@ -2,20 +2,13 @@ from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
+import pymysql
 
 from forms import login_form, account_form
 import os, re
 
 app = Flask (__name__)
-
-# necessary for keeping client-side sessions secure
-app.secret_key = os.urandom(24)
-
-# check if app is running in production
-production = os.getenv('SERVER_SOFTWARE').startswith('Google App Engine/')
-
-if not production:
-    app.debug = True
+app.config.from_pyfile('./config.py')
 
 
 class Alert:
@@ -29,7 +22,15 @@ class Alert:
     danger = "alert-danger"
 
 
-# TODO: make db connection here
+def get_db():
+    """Lazy-load function that makes a connection to the database. It is the
+    clients responsibility to commit any changes. The connection is
+    automatically closed at the end of the request by the close_db function.
+    """
+    if not hasattr(g, 'connection'):
+        g.connection = pymysql.connect(**app.config.DB_CONNECTION)
+    return g.connection
+
 # TODO: handle possibility of being logged in as both user types
 @app.before_request
 def authenticate():
@@ -61,8 +62,8 @@ def authenticate():
 @app.teardown_appcontext
 def close_db(error):
     """Closes the database again at the end of the request."""
-    if g.get('db'):
-        g.db.close()
+    if g.get('connection'):
+        g.connection.close()
 
 def get_account(path=None):
     # overwrite if not specified
@@ -100,6 +101,7 @@ def report_errors(err):
 
 @app.route('/')
 def index():
+    connection = pymysql.connect(**app.config['DB_CONNECTION'])
     return render_template(
         'index.html',
         account=get_account()
