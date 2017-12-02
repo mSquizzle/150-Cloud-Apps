@@ -1,55 +1,53 @@
-{% extends "skeleton.html" %}
-
-{% block nav %}
+{% extends "skeleton.html" %} {% block nav %}
 <nav class="navbar navbar-default">
   <div class="container-fluid">
 
     <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-content" aria-expanded="false">
 
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-        <!-- Screen-reader only -->
         <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
+
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
 
+      <!-- brand always visible -->
       <a class="navbar-brand" href="{{ url_for('index') }}">Blood Coordinations Inc</a>
-
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <div class="collapse navbar-collapse" id="navbar-content">
 
-      <ul class="nav navbar-nav">
-        <!-- active left navigation -->
-        <li class="active"><a href="#">Home <span class="sr-only">(current)</span></a></li>
-      </ul>
-      <div class="nav navbar-right">
+      <ul class="nav navbar-nav navbar-right">
           {% if account['user'] %}
-
-          <a href="{{ url_for('settings') }}"><button type="button" class="btn btn-default navbar-btn">Settings</button></a>
-            <a href="{{ account['logout'] }}"><button type="button" class="btn btn-default navbar-btn">Logout</button></a>
+          <li><a href="{{ url_for('settings') }}">Settings</a></li>
+          <li><a href="{{ account['logout'] }}">Logout</a></li>
           {% else %}
-          <a href="{{ url_for('choose_account') }}"><button type="button" class="btn btn-default navbar-btn">Create Account</button></a>
-          <a href="{{ account['login'] }}"><button type="button" class="btn btn-default navbar-btn">Individual Sign In</button></a>
+          <li><a href="{{ url_for('choose_account') }}">Create Account</a></li>
+          <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"></a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ account['login'] }}">Individual</a></li>
+                <li><a href="#">Institution</a></li>
+              </ul>
+          </li>
           {% endif %}
-      </div>
+      </ul>
     </div>
+
   </div>
 </nav>
 {% endblock %}
 
 
-<!-- TODO: add padding if necessary -->
 {% block footer %}
 <nav class="navbar navbar-inverse navbar-fixed-bottom">
   <div class="container-fluid centered-navbar">
 
       <ul class="nav navbar-nav">
-              <li><a href="{{ url_for('about') }}">About</a></li>
-              <li><a href="{{ url_for('faq') }}">FAQ</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+          <li><a href="{{ url_for('faq') }}">FAQ</a></li>
       </ul>
   </div>
 </nav>

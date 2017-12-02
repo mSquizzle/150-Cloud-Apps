@@ -1,20 +1,20 @@
 {% extends "layout.html" %}
 {% block body %}
 <div class="page-header">
-    <h1>New Account</h1>
+    <h1>Create Account</h1>
 </div>
 
 <h2>Select an account type:</h2>
 
 <div class="btn-group btn-group-justified" role="group" aria-label="Account type selection" style="padding-top: 30px">
-        <a href="{{ account['login'] }}" class="btn-group" role="group">
-            <button type="button" class="btn btn-default"><i class="fa fa-user fa-lg" aria-hidden="true"></i><br> Individual</button>
+    <a href="{{ account['login'] }}" class="btn-group" role="group">
+        <button type="button" class="btn btn-default"><div style="padding:15px;"><i class="fa fa-user fa-lg" aria-hidden="true"></i><br> Individual</div></button>
     </a>
     <a href="{{ url_for('create_account') }}" class="btn-group" role="group">
-            <button type="button" class="btn btn-default"><i class="fa fa-hospital-o fa-lg" aria-hidden="true"></i><br>Hospital</button>
+        <button type="button" class="btn btn-default"><div style="padding: 15px;"><i class="fa fa-hospital-o fa-lg" aria-hidden="true"></i><br>Hospital</div></button>
     </a>
     <a href="{{ url_for('create_account') }}" class="btn-group" role="group">
-            <button type="button" class="btn btn-default"><i class="fa fa-university fa-lg" aria-hidden="true"></i><br>Blood Bank</button>
+        <button type="button" class="btn btn-default"><div style="padding: 15px;"><i class="fa fa-university fa-lg" aria-hidden="true"></i><br>Blood Bank</div></button>
     </a>
 </div>
 
