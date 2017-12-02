@@ -92,7 +92,7 @@ def redirect_url(default='index'):
 
 def report_errors(err):
     for field_name, field_errors in err.iteritems():
-        flash("{} field error: {}".format(field_name, field_errors[0]), Alert.warning)
+        flash(field_errors[0], Alert.warning)
 
 ################################################################################
 #                                  Routing                                     #
@@ -136,14 +136,11 @@ def create_account():
             return redirect(url_for('index'))
         else:
             report_errors(form.errors)
-            return redirect(redirect_url())
-    else:
-        # handle get request
-        return render_template(
-            'accounts/create-account.html',
-            account=get_account(),
-            form=account_form.Form()
-        )
+    return render_template(
+        'accounts/create-account.html',
+        account=get_account(),
+        form=account_form.Form()
+    )
 
 @app.route('/account/login', methods=['GET', 'POST'])
 def login():
@@ -153,22 +150,18 @@ def login():
             hashed = "bogus" # TODO: g.db.execute(select... where =form.email.data)
             if not hashed:
                 flash('Unable to find account', Alert.warning)
-                return redirect(redirect_url())
             elif check_password_hash(hashed, form.password.data):
                 session['institution'] = username
-                return redirect(url_for('index'))
+                return redirect(redirect_url())
             else:
                 flash('Incorrect password', Alert.warning)
-                return redirect(redirect_url())
         else:
             report_errors(form.errors)
-            return redirect(redirect_url())
-    else:
-        return render_template(
-            'accounts/login.html',
-            account=get_account(),
-            form=form
-        )
+    return render_template(
+        'accounts/login.html',
+        account=get_account(),
+        form=form
+    )
 
 @app.route('/account/logout')
 def logout():
