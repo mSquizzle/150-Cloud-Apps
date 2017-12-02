@@ -102,31 +102,19 @@ def report_errors(err):
 @app.route('/')
 def index():
     connection = pymysql.connect(**app.config['DB_CONNECTION'])
-    return render_template(
-        'index.html',
-        account=get_account()
-    )
+    return render_template('index.html')
 
 @app.route('/faq')
 def faq():
-    return render_template(
-        'faq.html',
-        account=get_account()
-    )
+    return render_template('faq.html')
 
 @app.route('/about')
 def about():
-    return render_template(
-        'about.html',
-        account=get_account()
-    )
+    return render_template('about.html')
 
 @app.route('/account/choose-account')
 def choose_account():
-    return render_template(
-        'accounts/choose-account.html',
-        account=get_account()
-    )
+    return render_template('accounts/choose-account.html')
 
 @app.route('/account/create-account', methods=['GET', 'POST'])
 def create_account():
@@ -140,7 +128,6 @@ def create_account():
             report_errors(form.errors)
     return render_template(
         'accounts/create-account.html',
-        account=get_account(),
         form=account_form.Form()
     )
 
@@ -161,7 +148,6 @@ def login():
             report_errors(form.errors)
     return render_template(
         'accounts/login.html',
-        account=get_account(),
         form=form
     )
 
@@ -173,12 +159,8 @@ def logout():
 
 @app.route('/settings')
 def settings():
-    return render_template(
-        'settings.html',
-        account=get_account())
+    return render_template('settings.html')
 
 @app.route("/emailadmin")
 def emailadmin():
-    return render_template(
-        'emailadmin.html',
-        account=get_account())
+    return render_template('emailadmin.html')

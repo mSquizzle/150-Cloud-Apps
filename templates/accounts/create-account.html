@@ -5,6 +5,8 @@
 </div>
 
 <form method="post" action="{{ url_for('create_account') }}">
+     {{ form.csrf_token }}
+
         <!--<label for="radio-buttons">Institution Type:</label>-->
     {{ form.institution.label }}:
     <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">

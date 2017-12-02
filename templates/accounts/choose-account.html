@@ -7,7 +7,7 @@
 <h2>Select an account type:</h2>
 
 <div class="btn-group btn-group-justified" role="group" aria-label="Account type selection" style="padding-top: 30px">
-    <a href="{{ account['login'] }}" class="btn-group" role="group">
+    <a href="{{ g.individual_login }}" class="btn-group" role="group">
         <button type="button" class="btn btn-default"><div style="padding:15px;"><i class="fa fa-user fa-lg" aria-hidden="true"></i><br> Individual</div></button>
     </a>
     <a href="{{ url_for('create_account') }}" class="btn-group" role="group">

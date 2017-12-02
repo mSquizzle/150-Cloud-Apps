@@ -20,16 +20,16 @@
     <div class="collapse navbar-collapse" id="navbar-content">
 
       <ul class="nav navbar-nav navbar-right">
-          {% if account['user'] %}
+          {% if g.authenticated %}
           <li><a href="{{ url_for('settings') }}">Settings</a></li>
-          <li><a href="{{ account['logout'] }}">Logout</a></li>
+          <li><a href="{{ g.logout }}">Logout</a></li>
           {% else %}
           <li><a href="{{ url_for('choose_account') }}">Create Account</a></li>
           <li class="dropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ account['login'] }}">Individual</a></li>
-                <li><a href="{{ url_for('login') }}">Institution</a></li>
+                <li><a href="{{ g.individual_login }}">Individual</a></li>
+                <li><a href="{{ g.institution_login }}">Institution</a></li>
               </ul>
           </li>
           {% endif %}
