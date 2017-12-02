@@ -29,7 +29,7 @@
               <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"></a>
               <ul class="dropdown-menu">
                 <li><a href="{{ account['login'] }}">Individual</a></li>
-                <li><a href="#">Institution</a></li>
+                <li><a href="{{ url_for('login') }}">Institution</a></li>
               </ul>
           </li>
           {% endif %}

@@ -5,30 +5,35 @@
 </div>
 
 <form method="post" action="{{ url_for('create_account') }}">
-    <label for="radio-buttons">Institution Type:</label>
+        <!--<label for="radio-buttons">Institution Type:</label>-->
+    {{ form.institution.label }}:
     <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
-        <label for="hospital" class="btn btn-primary"><input type="radio" name="institution_type" id="hospital" value="hospital">Hospital</label>
-        <label for="blood_bank" class="btn btn-primary"><input type="radio" name="institution_type" id="blood_bank" value="blood_bank">Blood Bank</label>
+        {% for subfield in form.institution %}
+          {{subfield.label }}
+          {{ subfield }}
+        {% endfor %}
+        <!--<label for="hospital" class="btn btn-primary"><input type="radio" name="institution_type" id="hospital" value="hospital">Hospital</label>
+        <label for="blood_bank" class="btn btn-primary"><input type="radio" name="institution_type" id="blood_bank" value="blood_bank">Blood Bank</label>-->
     </div>
 
     <div class="form-group">
-        <label for="institution">Institution:</label>
-        <input type="text" id="institution" name="institution" class="form-control" placeholder="Institution">
+        {{ form.name.label }}:
+        {{ form.name(class="form-control", placeholder="Institution") }}
     </div>
 
     <div class="form-group">
-        <label for="email">Email:</label>
-        <input type="text" id="email" name="email" class="form-control" placeholder="me@example.com">
+        {{ form.email.label }}:
+        {{ form.name(class="form-control", placeholder="me@example.com") }}
     </div>
 
     <div class="form-group">
-        <label for="email">Password:</label>
-        <input type="password" id="pass" name="pass" class="form-control">
+        {{ form.password.label }}:
+        {{ form.password(class="form-control") }}
     </div>
 
     <div class="form-group">
-        <label for="email">Repeat Password:</label>
-        <input type="password" id="repeat_pass" name="repeat_pass" class="form-control">
+        {{ form.repeat_password.label }}:
+        {{ form.repeat_password(class="form-control") }}
     </div>
 
     <input type="submit" class="btn btn-primary btn-large" value="Submit">
