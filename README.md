@@ -26,7 +26,10 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
 ```
 
 ### Database Proxy
-TODO
+- Set up a Cloud SQL MySQL database 
+- Authorize your client machine and do other housekeeping tasks
+- Download the [Cloud SQL proxy binary](https://cloud.google.com/sql/docs/mysql/sql-proxy)
+- Set the `CLOUDSQL_PASSWORD` as an environment variable so that the application can connect
 
 ### Development Server
 Once the libraries and database proxy are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
