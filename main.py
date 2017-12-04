@@ -28,7 +28,7 @@ def get_db():
     automatically closed at the end of the request by the close_db function.
     """
     if not hasattr(g, 'connection'):
-        g.connection = pymysql.connect(**app.config.DB_CONNECTION)
+        g.connection = pymysql.connect(**app.config['DB_CONNECTION'])
     return g.connection
 
 # TODO: handle possibility of being logged in as both user types
@@ -64,24 +64,6 @@ def close_db(error):
     """Closes the database again at the end of the request."""
     if g.get('connection'):
         g.connection.close()
-
-def get_account(path=None):
-    # overwrite if not specified
-    path = request.path
-    user = users.get_current_user()
-    account = {}
-    if not user:
-        account.update(
-            user = None,
-            login = users.create_login_url(path),
-        )
-    else:
-        account.update(
-            user = user,
-            kind = 'individual',
-            logout = users.create_logout_url(path),
-        )
-    return account
 
 def redirect_url(default='index'):
     """
@@ -121,7 +103,7 @@ def create_account():
     form = account_form.Form()
     if request.method == 'POST':
         if form.validate_on_submit():
-            # TODO: create institutional account
+            # TODO: create institutional account here
             flash("Successfully created acount", Alert.success)
             return redirect(url_for('index'))
         else:
@@ -136,14 +118,22 @@ def login():
     form = login_form.Form()
     if request.method == 'POST':
         if form.validate_on_submit():
-            hashed = "bogus" # TODO: g.db.execute(select... where =form.email.data)
-            if not hashed:
-                flash('Unable to find account', Alert.warning)
-            elif check_password_hash(hashed, form.password.data):
-                session['institution'] = username
-                return redirect(redirect_url())
-            else:
-                flash('Incorrect password', Alert.warning)
+            conn = get_db()
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT hospital_id FROM %s WHERE email=%s;",
+                    (form.institution.data, form.email.data)
+                )
+                hashed = cursor.fetchone()
+                if not hashed:
+                    flash('Unable to find account', Alert.warning)
+                elif check_password_hash(hashed, form.password.data):
+                    # TODO: also need to encode bank/hospital
+                    session['name'] = donor_id
+                    session['institution'] = "word"
+                    return redirect(redirect_url())
+                else:
+                    flash('Incorrect password', Alert.warning)
         else:
             report_errors(form.errors)
     return render_template(
