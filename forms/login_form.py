@@ -3,7 +3,7 @@ from wtforms import StringField, RadioField, PasswordField, validators
 
 class Form(FlaskForm):
     institution = RadioField('Institution Type', validators=[
-        validators.DataRequired()
+        validators.DataRequired('Institution type choice is required')
     ], choices=[
         ('hospital', 'Hospital'),
         ('bank', 'Blood Bank')
