@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import pymysql
 
-from forms import login_form, account_form
+from forms import login_form, account_form, donor
 import os, re
 
 app = Flask (__name__)
@@ -41,27 +41,53 @@ def authenticate():
     template rendering context. In the future, the database connection will
     also be performed in this subroutine.
     """
-    # check for authenticated individual
-    user = users.get_current_user()
-    if user:
-        g.authenticated = True
-        g.account = "Individual"
-        g.user = user
-        g.logout = users.create_logout_url(url_for('index'))
-    # check for authenticated institution
-    elif 'institution' in session:
-        g.authenticated = True
-        g.account = "Institution"
-        g.user = session['institution']
-        g.logout = url_for('logout')
-    else:
+    def unauthenticated():
         g.authenticated = False
         g.individual_login = users.create_login_url(redirect_url())
         g.institution_login = url_for('login')
+
+    user = users.get_current_user()
+    # check if session already been authenticated
+    if session.get("authenticated"):
+        g.authenticated = True
+        g.account_type = session.get("account_type")
+        g.account_id = session.get("account_id")
+        if g.account_type == "donor":
+            g.logout = users.create_logout_url(url_for('index'))
+        else:
+            g.logout = url_for('logout')
+    # just posted account details
+    elif hasattr(request.url_rule, "rule") and url_for('complete_individual') in request.url_rule.rule:
+        unauthenticated()
+        return
+    # check for donor account
+    elif user:
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT donor_id FROM donor WHERE email = %s",
+                (user.email(),)
+            )
+        donor_id = cursor.fetchone()
+        if donor_id:
+            g.authenticated = True
+            g.account_type = "donor"
+            g.account_id = donor_id
+            g.logout = users.create_logout_url(url_for('index'))
+        else:
+            unauthenticated()
+            # account not finished, redirect to form
+            form = donor.Form()
+            return render_template(
+                'accounts/complete_account.html',
+                form=form
+            )
+    else:
+        unauthenticated()
     
 @app.teardown_appcontext
 def close_db(error):
-    """Closes the database again at the end of the request."""
+    """Closes the database at the end of the request."""
     if g.get('connection'):
         g.connection.close()
 
@@ -100,10 +126,17 @@ def choose_account():
 
 @app.route('/account/create-account', methods=['GET', 'POST'])
 def create_account():
+    """
+    Create a blood bank or hospital admin account
+    """
     form = account_form.Form()
     if request.method == 'POST':
         if form.validate_on_submit():
             # TODO: create institutional account here
+            conn = get_db()
+            with conn.cursor() as cursor:
+                pass
+                # cursor.execute("INSERT INTO %s (short_name, full_name, phone_number) VALUES ()", ())
             flash("Successfully created acount", Alert.success)
             return redirect(url_for('index'))
         else:
@@ -112,6 +145,26 @@ def create_account():
         'accounts/create-account.html',
         form=account_form.Form()
     )
+
+@app.route('/account/complete-individual', methods=['POST'])
+def complete_individual():
+    form = donor.Form()
+    if form.validate_on_submit():
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO donor (first_name, last_name, phone_number, email) VALUES (%s, %s, %s, %s)",
+                (form.first_name.data, form.last_name.data, form.phone.data, "@example.com")
+            )
+        conn.commit()
+        flash("Successfully created acount", Alert.success)
+        return redirect(url_for('index'))
+    report_errors(form.errors)
+    return render_template(
+        'accounts/complete_account.html',
+        form=form
+    )
+
 
 @app.route('/account/login', methods=['GET', 'POST'])
 def login():

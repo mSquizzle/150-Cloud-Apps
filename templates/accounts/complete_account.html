@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="page-header">
+    <h1>Please Complete Your Donor Account</h1>
+</div>
+
+<form method="post" action="{{ url_for('complete_individual') }}">
+    {{ form.csrf_token }}
+    <div class="form-group">
+        {{ form.first_name.label }}:
+        {{ form.first_name(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.last_name.label }}:
+        {{ form.last_name(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.phone.label }}:
+        {{ form.phone(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.zipcode.label }}:
+        {{ form.zipcode(class="form-control") }}
+    </div>
+    {{ form.outreach.label }}
+    <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
+        {% for subfield in form.outreach %}
+          {{subfield.label }}
+          {{ subfield }}
+        {% endfor %}
+    </div>
+    {{ form.contact.label }}
+    <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
+        {% for subfield in form.contact %}
+          {{subfield.label }}
+          {{ subfield }}
+        {% endfor %}
+    </div>
+    <input type="submit" class="btn btn-primary btn-large" value="Submit">
+</form>
+
+{% endblock %}

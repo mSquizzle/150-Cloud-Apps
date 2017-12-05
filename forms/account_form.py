@@ -6,7 +6,7 @@ class Form(FlaskForm):
         validators.DataRequired()
     ], choices=[
         ('hospital', 'Hospital'),
-        ('blood_bank', 'Blood Bank')
+        ('bank', 'Blood Bank')
     ])
     email = StringField('Email', validators=[
         validators.DataRequired('Email field is required'),
