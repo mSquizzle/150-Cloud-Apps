@@ -23,7 +23,8 @@ LOCAL_DB_CONNECTION = {
     'database': CLOUDSQL_DATABASE,
     'host': '127.0.0.1',
     'port': 3306,
-    'cursorclass': pymysql.cursors.DictCursor
+    'cursorclass': pymysql.cursors.DictCursor,
+    'autocommit': True
 }
 
 LIVE_DB_CONNECTION = {
@@ -32,7 +33,8 @@ LIVE_DB_CONNECTION = {
     'database': CLOUDSQL_DATABASE,
     'host': 'localhost',
     'unix_socket': '/cloudsql/{connection_name}'.format(connection_name=CLOUDSQL_CONNECTION_NAME),
-    'cursorclass': pymysql.cursors.DictCursor
+    'cursorclass': pymysql.cursors.DictCursor,
+    'autocommit': True
 }
 
 """# for running

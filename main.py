@@ -25,9 +25,9 @@ class Alert:
 
 def get_db():
     """
-    Lazy-load function that makes a connection to the database. It is the
-    clients responsibility to commit any changes. The connection is
-    automatically closed at the end of the request by the close_db function.
+    Lazy-load function that makes a connection to the database. The connection
+    is configured to autocommit changes and is automatically closed at the end
+    of the request by the close_db function.
     """
     if not hasattr(g, 'connection'):
         g.connection = pymysql.connect(**app.config['DB_CONNECTION'])
@@ -65,13 +65,13 @@ def authenticate():
         return
     # check for donor account
     elif user:
-        conn = get_db()
-        with conn.cursor() as cursor:
+        row = None
+        with get_db().cursor() as cursor:
             cursor.execute(
                 "SELECT id FROM donor WHERE email = %s",
                 (user.email(),)
             )
-        row = cursor.fetchone()
+            row = cursor.fetchone()
         if row:
             g.authenticated = True
             g.account_type = 'donor'
@@ -90,7 +90,9 @@ def authenticate():
     
 @app.teardown_appcontext
 def close_db(error):
-    """Closes the database at the end of the request."""
+    """
+    Closes the database at the end of the request if it has been opened.
+    """
     if g.get('connection'):
         g.connection.close()
 
@@ -103,6 +105,10 @@ def redirect_url(default='index'):
         url_for(default)
 
 def report_errors(err):
+    """
+    Reports form errors by flashing them to the client. If there are multiple
+    errors for a given field then it only reports the first.
+    """
     for field_name, field_errors in err.iteritems():
         flash(field_errors[0], Alert.warning)
 
@@ -112,20 +118,23 @@ def report_errors(err):
 
 @app.route('/')
 def index():
-    connection = pymysql.connect(**app.config['DB_CONNECTION'])
     return render_template('index.html')
+
 
 @app.route('/faq')
 def faq():
     return render_template('faq.html')
 
+
 @app.route('/about')
 def about():
     return render_template('about.html')
 
+
 @app.route('/account/choose-account')
 def choose_account():
     return render_template('accounts/choose-account.html')
+
 
 @app.route('/account/create-account', methods=['GET', 'POST'])
 def create_account():
@@ -133,40 +142,36 @@ def create_account():
     Create a blood bank or hospital admin account.
     """
     form = account_form.Form()
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            conn = get_db()
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO {inst} (hashed, name, phone, email, zipcode)"
-                    "VALUES (%s, %s, %s, %s, %s)".format(inst=form.institution.data),
-                    (generate_password_hash(form.password.data), 
-                    form.name.data, "phone", form.email.data, 1111)
-                )
-            conn.commit()
-            flash("Successfully created acount", Alert.success)
-            return redirect(url_for('login'))
-        else:
-            report_errors(form.errors)
+    if form.validate_on_submit():
+        with get_db().cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO {} (hashed, name, phone, email, zipcode)"
+                "VALUES (%s, %s, %s, %s, %s)".format(form.institution.data),
+                (generate_password_hash(form.password.data),
+                form.name.data, "phone", form.email.data, 1111)
+            )
+        flash("Successfully created acount", Alert.success)
+        return redirect(url_for('login'))
+    elif form.errors:
+        report_errors(form.errors)
     return render_template(
         'accounts/create-account.html',
         form=account_form.Form()
     )
+
 
 @app.route('/account/complete-individual', methods=['POST'])
 def complete_individual():
     form = donor.Form()
     user = users.get_current_user()
     if form.validate_on_submit():
-        conn = get_db()
-        with conn.cursor() as cursor:
+        with get_db().cursor() as cursor:
             cursor.execute(
                 "INSERT INTO donor"
                 "(first_name, last_name, phone, zipcode, email)"
                 "VALUES (%s, %s, %s, %s, %s)",
                 (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
             )
-        conn.commit()
         flash("Successfully created acount!", Alert.success)
         return redirect(url_for('index'))
     report_errors(form.errors)
@@ -179,33 +184,33 @@ def complete_individual():
 @app.route('/account/login', methods=['GET', 'POST'])
 def login():
     form = login_form.Form()
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            conn = get_db()
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id, hashed FROM {inst} WHERE email=%s;".format(inst=form.institution.data),
-                    (form.email.data,)
-                )
-                row = cursor.fetchone()
-                if not row:
-                    flash(
-                        'Unable to find account for email {email}'.format(email=form.email.data),
-                        Alert.warning
-                    )
-                elif check_password_hash(row['hashed'], form.password.data):
-                    session['authenticated'] = True
-                    session['account_type'] = form.institution.data
-                    session['account_id'] = row['id']
-                    return redirect(url_for('index'))
-                else:
-                    flash('Invalid password', Alert.warning)
+    if form.validate_on_submit():
+        row = None
+        with get_db().cursor() as cursor:
+            cursor.execute(
+                "SELECT id, hashed FROM {} WHERE email=%s;".format(form.institution.data),
+                (form.email.data,)
+            )
+            row = cursor.fetchone()
+        if not row:
+            flash(
+                'Unable to find account under email "{}"'.format(form.email.data),
+                Alert.warning
+            )
+        elif check_password_hash(row['hashed'], form.password.data):
+            session['authenticated'] = True
+            session['account_type'] = form.institution.data
+            session['account_id'] = row['id']
+            return redirect(url_for('index'))
         else:
-            report_errors(form.errors)
+            flash('Invalid password', Alert.warning)
+    elif form.errors:
+        report_errors(form.errors)
     return render_template(
         'accounts/login.html',
         form=form
     )
+
 
 @app.route('/account/logout')
 def logout():
@@ -217,9 +222,11 @@ def logout():
     session.pop('account_id', None)
     return redirect(url_for('index'))
 
+
 @app.route('/settings')
 def settings():
     return render_template('settings.html')
+
 
 @app.route("/emailadmin")
 def emailadmin():
