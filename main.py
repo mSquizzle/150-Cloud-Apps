@@ -13,8 +13,9 @@ app.config.from_pyfile('./config.py')
 
 class Alert:
     """
-    Bootstrap classes used for flashing messages to the client. Sets
-    the category of the message which is processed by a base template.
+    Bootstrap style classes used for flashing messages to the client.
+    Sets the category of the message which is processed in the skeleton
+    template.
     """
     success = "alert-success"
     info = "alert-info"
@@ -23,7 +24,8 @@ class Alert:
 
 
 def get_db():
-    """Lazy-load function that makes a connection to the database. It is the
+    """
+    Lazy-load function that makes a connection to the database. It is the
     clients responsibility to commit any changes. The connection is
     automatically closed at the end of the request by the close_db function.
     """
@@ -31,15 +33,15 @@ def get_db():
         g.connection = pymysql.connect(**app.config['DB_CONNECTION'])
     return g.connection
 
+
 # TODO: handle possibility of being logged in as both user types
 @app.before_request
 def authenticate():
     """
     Checks if the user is authenticated. Abstracts over the differences
-    between individual and institutional users and stores important variables
+    between donor and institutional accounts and stores important variables
     in the application context ("g") which is accessible from within the
-    template rendering context. In the future, the database connection will
-    also be performed in this subroutine.
+    template rendering context.
     """
     def unauthenticated():
         g.authenticated = False
@@ -47,7 +49,7 @@ def authenticate():
         g.institution_login = url_for('login')
 
     user = users.get_current_user()
-    # check if session already been authenticated
+    # check if session is already authenticated
     if session.get("authenticated"):
         g.authenticated = True
         g.account_type = session.get("account_type")
@@ -56,8 +58,9 @@ def authenticate():
             g.logout = users.create_logout_url(url_for('index'))
         else:
             g.logout = url_for('logout')
-    # just posted account details
-    elif hasattr(request.url_rule, "rule") and url_for('complete_individual') in request.url_rule.rule:
+    # if donor just finished creating an account then
+    # do not serve the complete_account page
+    elif user and hasattr(request.url_rule, 'rule') and url_for('complete_individual') in request.url_rule.rule:
         unauthenticated()
         return
     # check for donor account
@@ -65,14 +68,14 @@ def authenticate():
         conn = get_db()
         with conn.cursor() as cursor:
             cursor.execute(
-                "SELECT donor_id FROM donor WHERE email = %s",
+                "SELECT id FROM donor WHERE email = %s",
                 (user.email(),)
             )
-        donor_id = cursor.fetchone()
-        if donor_id:
+        row = cursor.fetchone()
+        if row:
             g.authenticated = True
-            g.account_type = "donor"
-            g.account_id = donor_id
+            g.account_type = 'donor'
+            g.account_id = row['id']
             g.logout = users.create_logout_url(url_for('index'))
         else:
             unauthenticated()
@@ -127,18 +130,22 @@ def choose_account():
 @app.route('/account/create-account', methods=['GET', 'POST'])
 def create_account():
     """
-    Create a blood bank or hospital admin account
+    Create a blood bank or hospital admin account.
     """
     form = account_form.Form()
     if request.method == 'POST':
         if form.validate_on_submit():
-            # TODO: create institutional account here
             conn = get_db()
             with conn.cursor() as cursor:
-                pass
-                # cursor.execute("INSERT INTO %s (short_name, full_name, phone_number) VALUES ()", ())
+                cursor.execute(
+                    "INSERT INTO {inst} (hashed, name, phone, email, zipcode)"
+                    "VALUES (%s, %s, %s, %s, %s)".format(inst=form.institution.data),
+                    (generate_password_hash(form.password.data), 
+                    form.name.data, "phone", form.email.data, 1111)
+                )
+            conn.commit()
             flash("Successfully created acount", Alert.success)
-            return redirect(url_for('index'))
+            return redirect(url_for('login'))
         else:
             report_errors(form.errors)
     return render_template(
@@ -149,15 +156,18 @@ def create_account():
 @app.route('/account/complete-individual', methods=['POST'])
 def complete_individual():
     form = donor.Form()
+    user = users.get_current_user()
     if form.validate_on_submit():
         conn = get_db()
         with conn.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO donor (first_name, last_name, phone_number, email) VALUES (%s, %s, %s, %s)",
-                (form.first_name.data, form.last_name.data, form.phone.data, "@example.com")
+                "INSERT INTO donor"
+                "(first_name, last_name, phone, zipcode, email)"
+                "VALUES (%s, %s, %s, %s, %s)",
+                (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
             )
         conn.commit()
-        flash("Successfully created acount", Alert.success)
+        flash("Successfully created acount!", Alert.success)
         return redirect(url_for('index'))
     report_errors(form.errors)
     return render_template(
@@ -174,19 +184,22 @@ def login():
             conn = get_db()
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "SELECT hospital_id FROM %s WHERE email=%s;",
-                    (form.institution.data, form.email.data)
+                    "SELECT id, hashed FROM {inst} WHERE email=%s;".format(inst=form.institution.data),
+                    (form.email.data,)
                 )
-                hashed = cursor.fetchone()
-                if not hashed:
-                    flash('Unable to find account', Alert.warning)
-                elif check_password_hash(hashed, form.password.data):
-                    # TODO: also need to encode bank/hospital
-                    session['name'] = donor_id
-                    session['institution'] = "word"
-                    return redirect(redirect_url())
+                row = cursor.fetchone()
+                if not row:
+                    flash(
+                        'Unable to find account for email {email}'.format(email=form.email.data),
+                        Alert.warning
+                    )
+                elif check_password_hash(row['hashed'], form.password.data):
+                    session['authenticated'] = True
+                    session['account_type'] = form.institution.data
+                    session['account_id'] = row['id']
+                    return redirect(url_for('index'))
                 else:
-                    flash('Incorrect password', Alert.warning)
+                    flash('Invalid password', Alert.warning)
         else:
             report_errors(form.errors)
     return render_template(
@@ -196,8 +209,12 @@ def login():
 
 @app.route('/account/logout')
 def logout():
-    # invalidate institution username from the session and redirect to homepage
-    session.pop('institution', None)
+    """
+    Invalidate institution from the session and redirect to homepage.
+    """
+    session.pop('authenticated', None)
+    session.pop('account_type', None)
+    session.pop('account_id', None)
     return redirect(url_for('index'))
 
 @app.route('/settings')
