@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import pymysql
 
-from forms import login_form, account_form, donor
+from forms import login, institution, donor
 import os, re
 from functools import wraps, partial
 
@@ -47,7 +47,7 @@ def authenticate():
     def unauthenticated():
         g.authenticated = False
         g.individual_login = users.create_login_url(redirect_url())
-        g.institution_login = url_for('login')
+        g.institution_login = url_for('inst_login')
 
     user = users.get_current_user()
     # check if session is already authenticated
@@ -168,7 +168,7 @@ def create_account():
     """
     Create a blood bank or hospital admin account.
     """
-    form = account_form.Form()
+    form = institution.Form()
     if form.validate_on_submit():
         with get_db().cursor() as cursor:
             cursor.execute(
@@ -178,7 +178,7 @@ def create_account():
                 form.name.data, "phone", form.email.data, 1111)
             )
         flash("Successfully created acount", Alert.success)
-        return redirect(url_for('login'))
+        return redirect(url_for('inst_login'))
     elif form.errors:
         report_errors(form.errors)
     elif request.args.get("inst"):
@@ -211,8 +211,8 @@ def complete_individual():
 
 
 @app.route('/account/login', methods=['GET', 'POST'])
-def login():
-    form = login_form.Form()
+def inst_login():
+    form = login.Form()
     if form.validate_on_submit():
         row = None
         with get_db().cursor() as cursor:

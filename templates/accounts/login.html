@@ -4,7 +4,7 @@
     <h1>Institutional Login</h1>
 </div>
 
-<form method="post" action="{{ url_for('login') }}">
+<form method="post" action="{{ url_for('inst_login') }}">
     {{ form.csrf_token }}
 
     {{ form.institution }}
