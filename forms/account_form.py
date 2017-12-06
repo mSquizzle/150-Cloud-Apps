@@ -32,9 +32,10 @@ class Form(FlaskForm):
     )
 
     def validate(self):
+        status = True
         if not FlaskForm.validate(self):
-            return False
+            status = False
         if self.password.data != self.repeat_password.data:
-            field.repeat_password.errors.append("Passwords must match")
-            return False
-        return True
+            self.repeat_password.errors.append("Passwords must match")
+            status = False
+        return status
