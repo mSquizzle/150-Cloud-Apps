@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, url_for, flash, \
-        session, g, redirect
+        session, g, redirect, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import pymysql
 
 from forms import login_form, account_form, donor
 import os, re
+from functools import wraps, partial
 
 app = Flask (__name__)
 app.config.from_pyfile('./config.py')
@@ -111,6 +112,32 @@ def report_errors(err):
     """
     for field_name, field_errors in err.iteritems():
         flash(field_errors[0], Alert.warning)
+
+def login_required(func):
+    """
+    Decorator that ensures client is authenticated. Returns HTTP status 401
+    if unathenticated.
+    """
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if not session.get("authenticated"):
+            abort(401)
+        return func(*args, **kwargs)
+    return decorated_view
+
+def _required(func, arg):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if not g.get("authenticated") or g.get("account_type") != arg:
+            abort(401)
+        return func(*args, **kwargs)
+    return decorated_view
+
+donor_required = partial(_required, arg="donor")
+
+bank_required = partial(_required, arg="bank")
+
+hospital_required = partial(_required, arg="hospital")
 
 ################################################################################
 #                                  Routing                                     #
