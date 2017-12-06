@@ -10,10 +10,10 @@
     <a href="{{ g.individual_login }}" class="btn-group" role="group">
         <button type="button" class="btn btn-default"><div style="padding:15px;"><i class="fa fa-user fa-lg" aria-hidden="true"></i><br> Individual</div></button>
     </a>
-    <a href="{{ url_for('create_account') }}" class="btn-group" role="group">
+    <a href="{{ url_for('create_account', inst='hospital') }}" class="btn-group" role="group">
         <button type="button" class="btn btn-default"><div style="padding: 15px;"><i class="fa fa-hospital-o fa-lg" aria-hidden="true"></i><br>Hospital</div></button>
     </a>
-    <a href="{{ url_for('create_account') }}" class="btn-group" role="group">
+    <a href="{{ url_for('create_account', inst='bank') }}" class="btn-group" role="group">
         <button type="button" class="btn btn-default"><div style="padding: 15px;"><i class="fa fa-university fa-lg" aria-hidden="true"></i><br>Blood Bank</div></button>
     </a>
 </div>

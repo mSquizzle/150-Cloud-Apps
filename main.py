@@ -181,9 +181,11 @@ def create_account():
         return redirect(url_for('login'))
     elif form.errors:
         report_errors(form.errors)
+    elif request.args.get("inst"):
+        form.institution.data = request.args.get("inst")
     return render_template(
         'accounts/create-account.html',
-        form=account_form.Form()
+        form=form
     )
 
 
