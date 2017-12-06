@@ -7,16 +7,7 @@
 <form method="post" action="{{ url_for('create_account') }}">
      {{ form.csrf_token }}
 
-        <!--<label for="radio-buttons">Institution Type:</label>-->
-    {{ form.institution.label }}:
-    <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
-        {% for subfield in form.institution %}
-          {{subfield.label }}
-          {{ subfield }}
-        {% endfor %}
-        <!--<label for="hospital" class="btn btn-primary"><input type="radio" name="institution_type" id="hospital" value="hospital">Hospital</label>
-        <label for="blood_bank" class="btn btn-primary"><input type="radio" name="institution_type" id="blood_bank" value="blood_bank">Blood Bank</label>-->
-    </div>
+    {{form.institution }}
 
     <div class="form-group">
         {{ form.name.label }}:

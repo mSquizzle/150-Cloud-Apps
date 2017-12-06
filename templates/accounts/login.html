@@ -7,13 +7,7 @@
 <form method="post" action="{{ url_for('login') }}">
     {{ form.csrf_token }}
 
-    {{ form.institution.label }}:
-    <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
-        {% for subfield in form.institution %}
-          {{subfield.label }}
-          {{ subfield }}
-        {% endfor %}
-    </div>
+    {{ form.institution }}
 
     <div class="form-group">
         {{ form.email.label }}:
