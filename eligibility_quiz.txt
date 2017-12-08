@@ -1,0 +1,37 @@
+Blood Donor Eligibility Quiz 
+
+1) Are you over 18?
+a) Yes
+b) No
+If no, check your local state guidelines, some states let you donate starting at 16. If you are 17, you may donate blood, but additional requirements apply; please check your state for guidelines. 
+
+2) Are you over 76?
+a) Yes
+b) No
+If yes, check your local state guidelines, some states require a doctor’s note declaring you are in good health.
+
+2) Do you weigh over 110lbs?
+a) Yes
+b) No
+If no, unfortunately, you cannot donate blood at this time 
+
+3) Do you take any prescription medications?
+a) Yes 
+b) No
+If yes, please bring an updates list of all you medications with you to the donation location.
+
+4) Have you traveled outside of the US or Canada in the last 3 years?
+a) Yes
+b) No
+If yes, please bring a list of all your travels, including which countries you visited, and when. 
+
+5) Do you currently have an untreated infection?
+a) Yes
+b) No
+If yes, you cannot donate at this time.
+
+6) Have you donated blood in the past 8 weeks?
+a) Yes
+b) No 
+If yes, unfortunately you are ineligible to donate at this time. Please wait until you have at least 56 days before donating again
+
