@@ -139,6 +139,10 @@ bank_required = partial(_required, arg="bank")
 
 hospital_required = partial(_required, arg="hospital")
 
+@app.errorhandler(401)
+def unauthorized(e):
+    return render_template('401.html'), 401
+
 ################################################################################
 #                                  Routing                                     #
 ################################################################################
@@ -181,8 +185,7 @@ def create_account():
         return redirect(url_for('inst_login'))
     elif form.errors:
         report_errors(form.errors)
-    elif request.args.get("inst"):
-        form.institution.data = request.args.get("inst")
+    form.institution.data = request.args.get("inst")
     return render_template(
         'accounts/create-account.html',
         form=form
@@ -257,6 +260,23 @@ def settings():
     return render_template('settings.html')
 
 
-@app.route("/emailadmin")
+@app.route('/emailadmin')
 def emailadmin():
     return render_template('emailadmin.html')
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    if g.account_type == 'donor':
+        return ''
+    else:
+        with get_db().cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM {} WHERE id=%s".format(g.account_type),
+                (g.account_id,)
+            )
+            return render_template(
+                'dashboard.html',
+                record=cursor.fetchone()
+            )
