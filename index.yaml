@@ -13,4 +13,22 @@ indexes:
 - kind: Event
   properties:
   - name: scheduled_for_deletion
+  - name: end_date
   - name: start_date
+
+- kind: Event
+  properties:
+  - name: scheduled_for_deletion
+  - name: start_date
+
+- kind: TimeSlot
+  properties:
+  - name: can_be_scheduled
+  - name: event
+  - name: scheduled_for_deletion
+  - name: start_time
+
+- kind: TimeSlot
+  properties:
+  - name: event
+  - name: start_time
