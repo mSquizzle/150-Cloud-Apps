@@ -35,8 +35,7 @@ def get_db():
     of the request by the close_db function.
     """
     if not hasattr(g, 'connection'):
-        g.connection = MySQLdb.connect(**app.config['DB_CONNECTION'])
-        g.connection.autocommit(True)
+        g.connection = app.config['CONNECT']()
     return g.connection
 
 def get_maps_key():

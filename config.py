@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os, logging
-import MySQLdb
 
 
 PRODUCTION = bool(os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine/'))
@@ -30,6 +29,19 @@ LIVE_DB_CONNECTION = {
 }
 
 if PRODUCTION:
-    DB_CONNECTION = LIVE_DB_CONNECTION
+    def CONNECT():
+        import MySQLdb
+        conn = MySQLdb.connect(**LIVE_DB_CONNECTION)
+        conn.autocommit(True)
+        return conn
 else:
-    DB_CONNECTION = LOCAL_DB_CONNECTION
+    def CONNECT():
+        import pymysql, os
+        conn = pymysql.connect(
+            host='127.0.0.1',
+            user=os.environ.get('CLOUDSQL_USER'),
+            password=os.environ.get('CLOUDSQL_PASSWORD'),
+            database=os.environ.get('CLOUDSQL_DATABASE'),
+            autocommit=True
+        )
+        return conn
