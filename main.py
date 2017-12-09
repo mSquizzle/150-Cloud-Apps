@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import MySQLdb
 import datetime
+import urllib
 from event import events, create, update
 
 import logging
@@ -37,6 +38,10 @@ def get_db():
         g.connection = MySQLdb.connect(**app.config['DB_CONNECTION'])
         g.connection.autocommit(True)
     return g.connection
+
+def get_maps_key():
+    #todo - turn into environment variable
+    return 'AIzaSyAfvS-E0xWdXEUvCryyyryLZAYNHAlGt5Y'
 
 
 # TODO: handle possibility of being logged in as both user types
@@ -153,7 +158,7 @@ def unauthorized(e):
 @app.route('/')
 def index():
     event_list = events.list_events()
-    return render_template('index.html', event_list=event_list)
+    return render_template('index.html', event_list=event_list, current_time=datetime.datetime.now())
 
 
 @app.route('/faq')
@@ -284,6 +289,8 @@ def dashboard():
             record=cursor.fetchone()
         )
             
+
+#### BEGIN EVENTS ####
 @app.route('/events/create', methods=['GET', 'POST'])
 def createevent():
     #todo - need to be able to extract from the session - not sticking right now
@@ -370,8 +377,15 @@ def deleteevent():
 
 @app.route('/events/publish', methods=['POST'])
 def publishevent():
-    event_id = None
-
+    eid = None
+    if request.values.has_key('eid'):
+        eid = request.values['eid']
+        event = events.Event.get_by_id(long(eid))
+        if event:
+            event.published = True
+            event.put()
+            flash('Event is now available to the public!', Alert.success)
+    return redirect(url_for('viewevent', eid=eid))
 
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
@@ -380,11 +394,42 @@ def viewevent():
     else:
         event_id = None
     event = None
+    url_params=None
     time_slots = None
     if event_id:
         event_long = long(event_id)
         possible_event = events.Event.get_by_id(event_long)
         event = possible_event
-        if event:
+        embed_params = {'key': get_maps_key(), 'q': event.location}
+        url_params = urllib.urlencode(embed_params)
+        if event and users.get_current_user():
+            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).fetch(1)
             time_slots = events.list_open_slots(event)
-    return render_template("events/view.html", event=event, time_slots=time_slots)
+    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params)
+
+@app.route("/events/schedule", methods=['POST'])
+def scheduleapt():
+    event_id = None
+    if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user():
+        user_id = users.get_current_user().user_id()
+        event_id = request.values['eid']
+        apt_id = request.values['tsid']
+        time_slot = events.TimeSlot.get_by_id(long(apt_id))
+        if time_slot and time_slot.can_be_scheduled and not time_slot.scheduled_for_deletion:
+            if time_slot.user_id:
+                if time_slot.user_id == user_id:
+                    time_slot.user_id = None
+                    time_slot.put()
+                    flash("Appointment cancelled.", Alert.info)
+                else:
+                    flash("This timeslot has already been scheduled by another user. Try another time.", Alert.danger)
+            else:
+                time_slot.user_id = user_id
+                time_slot.put()
+                flash("Appointment scheduled!", Alert.success)
+        else:
+            flash("Unable to find specified timeslot", Alert.danger)
+    return redirect(url_for("viewevent", eid=event_id))
+
+
+#### END EVENTS ####

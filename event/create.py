@@ -10,10 +10,10 @@ class Form(FlaskForm):
     description = StringField('Description')
     start_date = DateTimeField('Start Date',
                                default=datetime.datetime.now(),
-                                validators=[validators.DataRequired()],format='%Y-%m-%d %H:%M')
+                                validators=[validators.DataRequired('Start Date is required')],format='%Y-%m-%d %H:%M')
     end_date = DateTimeField('End Date',
                              default=datetime.datetime.now()+datetime.timedelta(hours=1),
-                              validators=[validators.DataRequired()], format='%Y-%m-%d %H:%M')
+                              validators=[validators.DataRequired('End Date is required')], format='%Y-%m-%d %H:%M')
 
     def validate(self):
         status = False
