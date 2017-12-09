@@ -30,15 +30,23 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
   1. Create GAE Project
   1. Enable billing
   1. Enable CloudSQL API
-- Set up a Cloud SQL MySQL database
+- [Set up a Cloud SQL MySQL database](https://cloud.google.com/sql/docs/mysql/quickstart#create_a_title_short_instance)
   1. Create second generation Cloud SQL instance within the same GAE project
   1. Set a `root` password for the instance
-- Authorize your client machine
+- [Authorize your client machine](https://cloud.google.com/sql/docs/mysql/sql-proxy#gcloud)
   1. Go through the `gcloud init` proces if you haven't already and choose your project
-  1. Authorize client machine with `gcloud atuh login`
-  1. This is undocumented but in order to fully authorize for Cloud SQL, run `gcloud auth application-default` :thumbsdown:
-- Download the [Cloud SQL proxy binary](https://cloud.google.com/sql/docs/mysql/sql-proxy)
-- Set the `CLOUDSQL_PASSWORD` as an environment variable so that the application can connect
+  1. Authorize client machine with `gcloud auth-default login` in order to allow the proxy to use your credentials for authentication 
+  1. Go ahead and run `gcloud auth login` for good measure
+- Setup the [Cloud SQL proxy binary](https://cloud.google.com/sql/docs/mysql/sql-proxy)
+  1. Download the [binary](https://cloud.google.com/sql/docs/mysql/sql-proxy#install)
+  1. Make it executable with `chmod +x cloud_sql_proxy`
+  1. For long-term it makes sense to move the binary to a directory like `/usr/local/bin`
+- Set environment variable for the Cloud SQL root password
+  1. Set`CLOUDSQL_PASSWORD` to your Cloud SQL root password in `app.yaml` by adding a [directive](https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml#Python_app_yaml_Defining_environment_variables)
+  ```
+  env_variables:
+    CLOUDSQL_PASSWORD: 'my_root_pass'
+  ```
 
 ### Development Server
 Once the libraries and database proxy are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
