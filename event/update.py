@@ -8,8 +8,3 @@ class Form(FlaskForm):
         validators.DataRequired('Location is required'),
     ])
     description = StringField('Description')
-    published = RadioField("Make Event Public?",
-        validators=[validators.DataRequired()], choices=[
-        ('True', 'Yes'),
-        ('False', 'No')
-    ])

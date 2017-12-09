@@ -2,10 +2,12 @@ from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
-import pymysql
+import MySQLdb
 import datetime
-from event import events, create, edit
+import urllib
+from event import events, create, update
 
+import logging
 from forms import login, institution, donor
 import os, re
 from functools import wraps, partial
@@ -33,8 +35,12 @@ def get_db():
     of the request by the close_db function.
     """
     if not hasattr(g, 'connection'):
-        g.connection = pymysql.connect(**app.config['DB_CONNECTION'])
+        g.connection = app.config['CONNECT']()
     return g.connection
+
+def get_maps_key():
+    #todo - turn into environment variable
+    return 'AIzaSyAfvS-E0xWdXEUvCryyyryLZAYNHAlGt5Y'
 
 
 # TODO: handle possibility of being logged in as both user types
@@ -68,17 +74,16 @@ def authenticate():
         return
     # check for donor account
     elif user:
-        row = None
-        with get_db().cursor() as cursor:
-            cursor.execute(
-                "SELECT id FROM donor WHERE email = %s",
-                (user.email(),)
-            )
-            row = cursor.fetchone()
+        cursor = get_db().cursor()
+        cursor.execute(
+            "SELECT id FROM donor WHERE email = %s",
+            (user.email(),)
+        )
+        row = cursor.fetchone()
         if row:
             g.authenticated = True
             g.account_type = 'donor'
-            g.account_id = row['id']
+            g.account_id = row[0]
             g.logout = users.create_logout_url(url_for('index'))
         else:
             unauthenticated()
@@ -152,7 +157,7 @@ def unauthorized(e):
 @app.route('/')
 def index():
     event_list = events.list_events()
-    return render_template('index.html', event_list=event_list)
+    return render_template('index.html', event_list=event_list, current_time=datetime.datetime.now())
 
 
 @app.route('/faq')
@@ -177,13 +182,13 @@ def create_account():
     """
     form = institution.Form()
     if form.validate_on_submit():
-        with get_db().cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO {} (hashed, name, phone, email, zipcode)"
-                "VALUES (%s, %s, %s, %s, %s)".format(form.institution.data),
-                (generate_password_hash(form.password.data),
-                form.name.data, "phone", form.email.data, 1111)
-            )
+        cursor = get_db().cursor()
+        cursor.execute(
+            "INSERT INTO {} (hashed, name, phone, email, zipcode)"
+            "VALUES (%s, %s, %s, %s, %s)".format(form.institution.data),
+            (generate_password_hash(form.password.data),
+            form.name.data, "phone", form.email.data, 1111)
+        )
         flash("Successfully created acount", Alert.success)
         return redirect(url_for('inst_login'))
     elif form.errors:
@@ -200,13 +205,13 @@ def complete_individual():
     form = donor.Form()
     user = users.get_current_user()
     if form.validate_on_submit():
-        with get_db().cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO donor"
-                "(first_name, last_name, phone, zipcode, email)"
-                "VALUES (%s, %s, %s, %s, %s)",
-                (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
-            )
+        cursor = get_db().cursor()
+        cursor.execute(
+            "INSERT INTO donor"
+            "(first_name, last_name, phone, zipcode, email)"
+            "VALUES (%s, %s, %s, %s, %s)",
+            (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
+        )
         flash("Successfully created acount!", Alert.success)
         return redirect(url_for('index'))
     report_errors(form.errors)
@@ -220,22 +225,21 @@ def complete_individual():
 def inst_login():
     form = login.Form()
     if form.validate_on_submit():
-        row = None
-        with get_db().cursor() as cursor:
-            cursor.execute(
-                "SELECT id, hashed FROM {} WHERE email=%s;".format(form.institution.data),
-                (form.email.data,)
-            )
-            row = cursor.fetchone()
+        cursor = get_db().cursor()
+        cursor.execute(
+            "SELECT id, hashed FROM {} WHERE email=%s;".format(form.institution.data),
+            (form.email.data,)
+        )
+        row = cursor.fetchone()
         if not row:
             flash(
                 'Unable to find account under email "{}"'.format(form.email.data),
                 Alert.warning
             )
-        elif check_password_hash(row['hashed'], form.password.data):
+        elif check_password_hash(row[1], form.password.data):
             session['authenticated'] = True
             session['account_type'] = form.institution.data
-            session['account_id'] = row['id']
+            session['account_id'] = row[0]
             return redirect(url_for('index'))
         else:
             flash('Invalid password', Alert.warning)
@@ -274,16 +278,18 @@ def dashboard():
     if g.account_type == 'donor':
         return ''
     else:
-        with get_db().cursor() as cursor:
-            cursor.execute(
-                "SELECT * FROM {} WHERE id=%s".format(g.account_type),
-                (g.account_id,)
-            )
-            return render_template(
-                'dashboard.html',
-                record=cursor.fetchone()
-            )
+        cursor = get_db().cursor()
+        cursor.execute(
+            "SELECT * FROM {} WHERE id=%s".format(g.account_type),
+            (g.account_id,)
+        )
+        return render_template(
+            'dashboard.html',
+            record=cursor.fetchone()
+        )
             
+
+#### BEGIN EVENTS ####
 @app.route('/events/create', methods=['GET', 'POST'])
 def createevent():
     #todo - need to be able to extract from the session - not sticking right now
@@ -297,7 +303,8 @@ def createevent():
             apt_slot=15,
             published=False,
             start_date=form.start_date.data,
-            end_date = form.end_date.data
+            end_date = form.end_date.data,
+            scheduled_for_deletion = False
         )
         new_event.put()
         current_date = new_event.start_date
@@ -316,28 +323,44 @@ def createevent():
             report_errors(form.errors)
         return render_template("events/create.html", form=form)
 
-@app.route('/events/edit', methods=['GET', 'POST'])
+@app.route('/events/edit', methods=['GET'])
 def editevent():
     event_id = None
-    if request.method == 'POST':
-        test = 22
-    #    event_id = request.form['eid']
-    else:
-        event_id = request.args['eid']
-    event=None
+    event= None
+    form=None
+    event_id = request.args['eid']
     if event_id:
         event_long = long(event_id)
         possible_event = events.Event.get_by_id(event_long)
         event=possible_event
-    form = edit.Form(inst_id="this_is_a_test")
-    if form.validate_on_submit() and event:
-        event.location = form.location.data
-        event.details = form.location.data
-        event.put()
-        flash("Event details updated successfully", Alert.success)
-        return redirect(url_for("viewevent", eid=event.key.id()))
+        form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
+    else:
+        report_errors(form.errors)
     return render_template("events/edit.html", form=form, event=event)
 
+@app.route('/events/update', methods=['POST'])
+def updateevent():
+    form = update.Form()
+    if request.values.has_key('event_id'):
+        update.event_id = request.values['event_id']
+    eid = None
+    if form.validate_on_submit():
+        event_long = long(form.data['event_id'])
+        logging.info("event long")
+        logging.info(event_long)
+        possible_event = events.Event.get_by_id(event_long)
+        if possible_event:
+            event = possible_event
+            event.location = form.location.data
+            event.description = form.description.data
+            event.put()
+            flash("Event details updated successfully", Alert.success)
+            return redirect(url_for('viewevent', eid=event.key.id()))
+    else:
+        report_errors(form.errors)
+        if form.data.has_key('event_id'):
+            eid = form.data['event_id']
+    return redirect(url_for('viewevent', eid=eid))
 
 @app.route('/events/delete', methods=['POST'])
 def deleteevent():
@@ -351,15 +374,61 @@ def deleteevent():
             flash("Event removed.", Alert.success)
     return redirect("")
 
-@app.route("/events/view")
+@app.route('/events/publish', methods=['POST'])
+def publishevent():
+    eid = None
+    if request.values.has_key('eid'):
+        eid = request.values['eid']
+        event = events.Event.get_by_id(long(eid))
+        if event:
+            event.published = True
+            event.put()
+            flash('Event is now available to the public!', Alert.success)
+    return redirect(url_for('viewevent', eid=eid))
+
+@app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
-    event_id = request.args['eid']
+    if request.values.has_key('eid'):
+        event_id = request.values['eid']
+    else:
+        event_id = None
     event = None
+    url_params=None
     time_slots = None
     if event_id:
         event_long = long(event_id)
         possible_event = events.Event.get_by_id(event_long)
         event = possible_event
-        if event:
+        embed_params = {'key': get_maps_key(), 'q': event.location}
+        url_params = urllib.urlencode(embed_params)
+        if event and users.get_current_user():
+            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).fetch(1)
             time_slots = events.list_open_slots(event)
-    return render_template("events/view.html", event=event, time_slots=time_slots)
+    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params)
+
+@app.route("/events/schedule", methods=['POST'])
+def scheduleapt():
+    event_id = None
+    if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user():
+        user_id = users.get_current_user().user_id()
+        event_id = request.values['eid']
+        apt_id = request.values['tsid']
+        time_slot = events.TimeSlot.get_by_id(long(apt_id))
+        if time_slot and time_slot.can_be_scheduled and not time_slot.scheduled_for_deletion:
+            if time_slot.user_id:
+                if time_slot.user_id == user_id:
+                    time_slot.user_id = None
+                    time_slot.put()
+                    flash("Appointment cancelled.", Alert.info)
+                else:
+                    flash("This timeslot has already been scheduled by another user. Try another time.", Alert.danger)
+            else:
+                time_slot.user_id = user_id
+                time_slot.put()
+                flash("Appointment scheduled!", Alert.success)
+        else:
+            flash("Unable to find specified timeslot", Alert.danger)
+    return redirect(url_for("viewevent", eid=event_id))
+
+
+#### END EVENTS ####

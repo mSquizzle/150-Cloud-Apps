@@ -4,11 +4,11 @@
     <h1>Update Event Details</h1>
 </div>
     {% if event %}
-        <form action="{{ url_for('editevent') }}" method="POST" >
+       <form action="{{ url_for('updateevent') }}" method="POST" >
             {{ form.csrf_token }}
             <div class="form-group">
                 {{ form.inst_id }}
-                {{ form.eid }}
+                {{ form.event_id }}
             </div>
             <div class="form-group">
                 {{ form.location.label }}:
@@ -18,13 +18,23 @@
                 {{ form.description.label }}:
                 {{ form.description(class="form-control") }}
             </div>
-            <input type="submit" class="btn btn-primary btn-large" value="Update Details">
+            <input type="submit" class="btn btn-primary btn-large  pull-right" value="Update Details">
         </form>
+        <a href="{{ url_for('viewevent', eid=event.key.id() )}}" class="btn btn-success btn-large" style="margin-bottom:5px">Return to Event View</a><br/>
         <form action="{{url_for('deleteevent')}}" method="POST">
             <input type="hidden" value="{{ event.key.id() }}" name="eid"/>
             <!-- <input type="hidden" value="{{event.key.id()}}" name="eid"/> -->
-            <input type="submit" class="btn btn-danger btn-large" value="Cancel Event">
+            <input type="submit" class="btn btn-danger btn-large  pull-right" value="Cancel Event">
         </form>
+        {% if not event.published %}
+            <h4>This event is not yet public. It will not appear in listings, nor will users be able to schedule appointments.</h4>
+            <form action="{{url_for('publishevent')}}" method="POST">
+                <input type="hidden" value="{{ event.key.id() }}" name="eid"/>
+                 <input type="submit" class="btn btn-danger btn-large  pull-right" value="Make Public">
+            </form>
+        {% else %}
+            <h4>This event is public.</h4>
+        {% endif%}
     {% else %}
         <p>Sorry, we are unable to find the requested event. Please try again.</p>
     {% endif %}

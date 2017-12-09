@@ -11,7 +11,7 @@ class Event(ndb.Model):
     published = ndb.BooleanProperty(default=False)
     start_date = ndb.DateTimeProperty(required=True)
     end_date = ndb.DateTimeProperty(required=True)
-    scheduled_for_deletion = ndb.BooleanProperty(default=True)
+    scheduled_for_deletion = ndb.BooleanProperty(default=False)
 
 def formatted_start_date(event):
     event.start_date.strftime("%B %d, %Y at %I:%M %p")
@@ -23,16 +23,20 @@ class TimeSlot(ndb.Model):
     event = ndb.KeyProperty(kind=Event, required=True)
     location = ndb.StringProperty()
     notes = ndb.StringProperty()
-    scheduled_for_deletion = ndb.BooleanProperty(default=True)
-
+    scheduled_for_deletion = ndb.BooleanProperty(default=False)
 
 # need utilities for this
 def list_events(limit=10):
-    q = Event.query().order(Event.start_date).filter(Event.start_date > datetime.datetime.now()).filter(Event.scheduled_for_deletion==False)#.filter(Event.published==True)
+    q = Event.query().order(Event.end_date).order(Event.start_date)\
+        .filter(Event.end_date > datetime.datetime.now())\
+        .filter(Event.scheduled_for_deletion==False)#.filter(Event.published==True)
     return q.fetch(limit)
 
 def list_open_slots(event):
     if event:
-        q = TimeSlot.query().filter(TimeSlot.event == event.key).filter(TimeSlot.can_be_scheduled == True)
+        q = TimeSlot.query().filter(TimeSlot.event == event.key)\
+            .filter(TimeSlot.can_be_scheduled == True)\
+            .filter(TimeSlot.scheduled_for_deletion == False)\
+            .filter(TimeSlot.start_time > datetime.datetime.now())
         return q.fetch()
     return None
