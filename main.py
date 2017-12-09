@@ -3,7 +3,6 @@ from flask import Flask, render_template, request, url_for, flash, \
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import MySQLdb
-import MySQLdb.cursors
 import datetime
 from event import events, create, update
 
@@ -37,7 +36,7 @@ def get_db():
     if not hasattr(g, 'connection'):
         g.connection = MySQLdb.connect(**app.config['DB_CONNECTION'])
         g.connection.autocommit(True)
-    return g.connection.cursor(cursorclass = MySQLdb.cursors.DictCursor)
+    return g.connection.cursor()
 
 
 # TODO: handle possibility of being logged in as both user types
@@ -81,7 +80,7 @@ def authenticate():
         if row:
             g.authenticated = True
             g.account_type = 'donor'
-            g.account_id = row['id']
+            g.account_id = row[0]
             g.logout = users.create_logout_url(url_for('index'))
         else:
             unauthenticated()
@@ -235,10 +234,10 @@ def inst_login():
                 'Unable to find account under email "{}"'.format(form.email.data),
                 Alert.warning
             )
-        elif check_password_hash(row['hashed'], form.password.data):
+        elif check_password_hash(row[1], form.password.data):
             session['authenticated'] = True
             session['account_type'] = form.institution.data
-            session['account_id'] = row['id']
+            session['account_id'] = row[0]
             return redirect(url_for('index'))
         else:
             flash('Invalid password', Alert.warning)
