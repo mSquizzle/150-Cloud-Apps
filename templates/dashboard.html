@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+</div>
+
+<table class="table">
+    <tr>
+        <th>Blood Type</th>
+        <th>Quantity (in units)</th>
+    </tr>
+    <tr>
+        <td>O-</td>
+        <td>{{ record['O_neg'] }}</td>
+    </tr>
+    <tr>
+        <td>O+</td>
+        <td>{{ record['O_pos'] }}</td>
+    </tr>
+    <tr>
+        <td>A-</td>
+        <td>{{ record['A_neg'] }}</td>
+    </tr>
+    <tr>
+        <td>A+</td>
+        <td>{{ record['A_pos'] }}</td>
+    </tr>
+    <tr>
+        <td>B-</td>
+        <td>{{ record['B_neg'] }}</td>
+    </tr>
+    <tr>
+        <td>B+</td>
+        <td>{{ record['B_pos'] }}</td>
+    </tr>
+    <tr>
+        <td>AB-</td>
+        <td>{{ record['AB_neg'] }}</td>
+    </tr>
+    <tr>
+        <td>AB+</td>
+        <td>{{ record['AB_pos'] }}</td>
+    </tr>
+</table>
+
+{% endblock %}
