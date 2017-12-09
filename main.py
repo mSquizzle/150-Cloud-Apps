@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
-import MySQLdb
 import datetime
 import urllib
 from event import events, create, update
