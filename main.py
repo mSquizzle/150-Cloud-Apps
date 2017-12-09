@@ -431,8 +431,6 @@ def scheduleapt():
 
 
 #### END EVENTS ####
-    return render_template("events/view.html", event=event, time_slots=time_slots)
-
 
 @app.route('/find_donors', methods=['GET', 'POST'])
 def find_donors():
