@@ -22,11 +22,14 @@
       <ul class="nav navbar-nav navbar-right">
           {% if g.authenticated %}
           <li><a href="{{ url_for('settings') }}">Settings</a></li>
+          {% if g.get('account_type') == 'bank' %}
+             <li><a href="{{ url_for('createevent') }}">Create Event</a></li>
+          {% endif %}
           <li><a href="{{ g.logout }}">Logout</a></li>
           {% else %}
           <li><a href="{{ url_for('choose_account') }}">Create Account</a></li>
           <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"></a>
+              <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"/></a>
               <ul class="dropdown-menu">
                 <li><a href="{{ g.individual_login }}">Individual</a></li>
                 <li><a href="{{ g.institution_login }}">Institution</a></li>

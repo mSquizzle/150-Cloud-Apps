@@ -3,6 +3,17 @@
 <div class="page-header">
     <h1>Welcome to MRS Blood Systems!</h1>
 </div>
-
-<p>Upcoming blood drive events:</p>
+    {% if event_list %}
+        <p>Upcoming blood drive events:</p>
+        <div class="list-group">
+        {% for event in event_list %}
+            <a href="{{url_for('viewevent', eid=event.key.id())}}" class="list-group-item">
+                <h4 class="list-group-item-heading">{{event.location}}</h4>
+                <p class="list-group-item-text">{{event.start_date.strftime("%B %d, %Y at %I:%M %p")}}</p>
+            </a>
+        {% endfor %}
+        </div>
+        {% else %}
+        <p>There are no upcoming blood drive events. Please try again later or contact a bank directly to schedule an appointment.</p>
+    {% endif %}
 {% endblock %}

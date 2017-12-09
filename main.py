@@ -3,6 +3,8 @@ from flask import Flask, render_template, request, url_for, flash, \
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import pymysql
+import datetime
+from event import events, create, edit
 
 from forms import login, institution, donor
 import os, re
@@ -145,7 +147,8 @@ hospital_required = partial(_required, arg="hospital")
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    event_list = events.list_events()
+    return render_template('index.html', event_list=event_list)
 
 
 @app.route('/faq')
@@ -260,3 +263,83 @@ def settings():
 @app.route("/emailadmin")
 def emailadmin():
     return render_template('emailadmin.html')
+
+@app.route('/events/create', methods=['GET', 'POST'])
+def createevent():
+    #todo - need to be able to extract from the session - not sticking right now
+    form = create.Form(inst_id="this_is_a_test")
+    if form.validate_on_submit():
+        new_event = events.Event(
+            inst_id = form.inst_id.data,
+            location = form.location.data,
+            description = form.description.data,
+            num_parallel=1,
+            apt_slot=15,
+            published=False,
+            start_date=form.start_date.data,
+            end_date = form.end_date.data
+        )
+        new_event.put()
+        current_date = new_event.start_date
+        while current_date < form.end_date.data:
+            time_slot = events.TimeSlot(
+                start_time = current_date,
+                can_be_scheduled=True,
+                event=new_event.key,
+                parent=new_event.key
+            )
+            time_slot.put()
+            current_date = current_date + datetime.timedelta(minutes=15)
+        return redirect(url_for('viewevent', eid=new_event.key.id()))
+    else:
+        if form.errors:
+            report_errors(form.errors)
+        return render_template("events/create.html", form=form)
+
+@app.route('/events/edit', methods=['GET', 'POST'])
+def editevent():
+    event_id = None
+    if request.method == 'POST':
+        test = 22
+    #    event_id = request.form['eid']
+    else:
+        event_id = request.args['eid']
+    event=None
+    if event_id:
+        event_long = long(event_id)
+        possible_event = events.Event.get_by_id(event_long)
+        event=possible_event
+    form = edit.Form(inst_id="this_is_a_test")
+    if form.validate_on_submit() and event:
+        event.location = form.location.data
+        event.details = form.location.data
+        event.put()
+        flash("Event details updated successfully", Alert.success)
+        return redirect(url_for("viewevent", eid=event.key.id()))
+    return render_template("events/edit.html", form=form, event=event)
+
+
+@app.route('/events/delete', methods=['POST'])
+def deleteevent():
+    event_id = request.form['eid']
+    if event_id:
+        event_long = long(event_id)
+        possible_event = events.Event.get_by_id(event_long)
+        if possible_event:
+            possible_event.scheduled_for_deletion = True
+            possible_event.put()
+            flash("Event removed.", Alert.success)
+    return redirect("")
+
+@app.route("/events/view")
+def viewevent():
+    event_id = request.args['eid']
+    event = None
+    time_slots = None
+    if event_id:
+        event_long = long(event_id)
+        possible_event = events.Event.get_by_id(event_long)
+        event = possible_event
+        if event:
+            time_slots = events.list_open_slots(event)
+    return render_template("events/view.html", event=event, time_slots=time_slots)
