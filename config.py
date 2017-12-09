@@ -20,7 +20,6 @@ LOCAL_DB_CONNECTION = {
     'db': os.environ.get('CLOUDSQL_DATABASE'),
     'host': '127.0.0.1',
     'port': 3306,
-    'cursorclass': MySQLdb.cursors.DictCursor,
 }
 
 LIVE_DB_CONNECTION = {
@@ -28,7 +27,6 @@ LIVE_DB_CONNECTION = {
     'passwd': os.environ.get('CLOUDSQL_PASSWORD'),
     'db': os.environ.get('CLOUDSQL_DATABASE'),
     'unix_socket': '/cloudsql/{}'.format(os.environ.get('CLOUDSQL_CONNECTION_NAME')),
-    'cursorclass': MySQLdb.cursors.DictCursor,
 }
 
 if production:

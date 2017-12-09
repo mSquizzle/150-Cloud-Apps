@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, url_for, flash, \
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import MySQLdb
+import MySQLdb.cursors
 import datetime
 from event import events, create, update
 
@@ -36,7 +37,7 @@ def get_db():
     if not hasattr(g, 'connection'):
         g.connection = MySQLdb.connect(**app.config['DB_CONNECTION'])
         g.connection.autocommit(True)
-    return g.connection
+    return g.connection.cursor(cursorclass = MySQLdb.cursors.DictCursor)
 
 
 # TODO: handle possibility of being logged in as both user types
@@ -71,7 +72,7 @@ def authenticate():
     # check for donor account
     elif user:
         row = None
-        with get_db().cursor() as cursor:
+        with get_db() as cursor:
             cursor.execute(
                 "SELECT id FROM donor WHERE email = %s",
                 (user.email(),)
@@ -179,7 +180,7 @@ def create_account():
     """
     form = institution.Form()
     if form.validate_on_submit():
-        with get_db().cursor() as cursor:
+        with get_db() as cursor:
             cursor.execute(
                 "INSERT INTO {} (hashed, name, phone, email, zipcode)"
                 "VALUES (%s, %s, %s, %s, %s)".format(form.institution.data),
@@ -202,7 +203,7 @@ def complete_individual():
     form = donor.Form()
     user = users.get_current_user()
     if form.validate_on_submit():
-        with get_db().cursor() as cursor:
+        with get_db() as cursor:
             cursor.execute(
                 "INSERT INTO donor"
                 "(first_name, last_name, phone, zipcode, email)"
@@ -223,7 +224,7 @@ def inst_login():
     form = login.Form()
     if form.validate_on_submit():
         row = None
-        with get_db().cursor() as cursor:
+        with get_db() as cursor:
             cursor.execute(
                 "SELECT id, hashed FROM {} WHERE email=%s;".format(form.institution.data),
                 (form.email.data,)
@@ -276,7 +277,7 @@ def dashboard():
     if g.account_type == 'donor':
         return ''
     else:
-        with get_db().cursor() as cursor:
+        with get_db() as cursor:
             cursor.execute(
                 "SELECT * FROM {} WHERE id=%s".format(g.account_type),
                 (g.account_id,)
