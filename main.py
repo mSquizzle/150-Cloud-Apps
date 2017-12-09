@@ -429,9 +429,6 @@ def scheduleapt():
             flash("Unable to find specified timeslot", Alert.danger)
     return redirect(url_for("viewevent", eid=event_id))
 
-
-#### END EVENTS ####
-
 @app.route('/find_donors', methods=['GET', 'POST'])
 def find_donors():
     """
