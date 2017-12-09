@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
-import pymysql
+import MySQLdb
 import datetime
 from event import events, create, update
 
@@ -34,7 +34,8 @@ def get_db():
     of the request by the close_db function.
     """
     if not hasattr(g, 'connection'):
-        g.connection = pymysql.connect(**app.config['DB_CONNECTION'])
+        g.connection = MySQLdb.connect(**app.config['DB_CONNECTION'])
+        g.connection.autocommit(True)
     return g.connection
 
 

@@ -2,6 +2,14 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
+env_variables:
+  CLOUDSQL_PASSWORD: ""
+  CLOUDSQL_CONNECTION_NAME : ""
+  CLOUDSQL_USER: "root"
+  CLOUDSQL_DATABASE: "mrs"
+  PROJECT_ID: ""
+
+
 # [START handlers]
 handlers:
 - url: /static
@@ -15,10 +23,6 @@ handlers:
   script: sendemail.application
   login: required
 
-#- url : /emailadmin.html
- # script : emailadmin.application
- # login : required
-
 - url: /.*
   script: main.app
 # [END handlers]
@@ -28,3 +32,5 @@ libraries:
   version: "2.5.2"
 - name: jinja2
   version: "2.6"
+- name: MySQLdb
+  version: "latest"
