@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="page-header">
+    <h1>Find Local Donors</h1>
+</div>
+
+<form method="post" action="{{ url_for('find_donors') }}">
+     {{ form.csrf_token }}
+
+
+    <div class="form-group">
+        {{ form.radius.label }}:
+        {{ form.radius(class="form-control", placeholder="ex:50 miles") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.zipcode.label }}:
+        {{ form.zipcode(class="form-control", placeholder="12345") }}
+    </div>
+
+    <input type="submit" class="btn btn-primary btn-large" value="Submit">
+</form>
+
+{% endblock %}

@@ -432,3 +432,29 @@ def scheduleapt():
 
 
 #### END EVENTS ####
+    return render_template("events/view.html", event=event, time_slots=time_slots)
+
+
+@app.route('/find_donors', methods=['GET', 'POST'])
+def find_donors():
+    """
+    Find all donors within a desired radius based on zipcode input.
+    """
+    form = radius.Form()
+    if form.validate_on_submit():
+	parameters = {"api_key": 'ZIPCODE_API_KEY',"format": "radius.json", \
+	     "zipcode": form.zipcode.data, "distance": form.radius.data, \
+	      "units": "miles?minimal" }
+	response = requests.get("https://www.zipcodeapi.com/rest", params=parameters)
+  #      if query comes back empty, then say there are no donors 
+  #      with get_db().cursor() as cursor:
+  #          cursor.execute(
+  #              "SELECT zipcode FROM donor WHERE zipcode IN(all the zipcodes returned from api call) 
+  #          )
+        flash("We found some donors", Alert.success)
+        return redirect(url_for('find_donors'))
+    elif form.errors:
+        report_errors(form.errors)
+  #  form.radius.data = request.args.get("inst")
+    return render_template(
+        'find_donors.html', form=form)
