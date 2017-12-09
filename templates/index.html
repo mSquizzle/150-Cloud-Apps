@@ -7,9 +7,14 @@
         <p>Upcoming blood drive events:</p>
         <div class="list-group">
         {% for event in event_list %}
-            <a href="{{url_for('viewevent', eid=event.key.id())}}" class="list-group-item">
+            {% set cls = 'list-group-item-success' if event.start_date < current_time else '' %}
+            <a href="{{url_for('viewevent', eid=event.key.id())}}" class="list-group-item list-group-item-action {{cls}}">
+                {% if cls %}
+                <span class="glyphicon glyphicon-exclamation-sign"></span> <span class="list-group-item-text small">In Progress!</span>
+                {% endif %}
                 <h4 class="list-group-item-heading">{{event.location}}</h4>
                 <p class="list-group-item-text">{{event.start_date.strftime("%B %d, %Y at %I:%M %p")}}</p>
+
             </a>
         {% endfor %}
         </div>
