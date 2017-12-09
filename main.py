@@ -36,7 +36,7 @@ def get_db():
     if not hasattr(g, 'connection'):
         g.connection = MySQLdb.connect(**app.config['DB_CONNECTION'])
         g.connection.autocommit(True)
-    return g.connection.cursor()
+    return g.connection
 
 
 # TODO: handle possibility of being logged in as both user types
@@ -70,13 +70,12 @@ def authenticate():
         return
     # check for donor account
     elif user:
-        row = None
-        with get_db() as cursor:
-            cursor.execute(
-                "SELECT id FROM donor WHERE email = %s",
-                (user.email(),)
-            )
-            row = cursor.fetchone()
+        cursor = get_db().cursor()
+        cursor.execute(
+            "SELECT id FROM donor WHERE email = %s",
+            (user.email(),)
+        )
+        row = cursor.fetchone()
         if row:
             g.authenticated = True
             g.account_type = 'donor'
@@ -179,13 +178,13 @@ def create_account():
     """
     form = institution.Form()
     if form.validate_on_submit():
-        with get_db() as cursor:
-            cursor.execute(
-                "INSERT INTO {} (hashed, name, phone, email, zipcode)"
-                "VALUES (%s, %s, %s, %s, %s)".format(form.institution.data),
-                (generate_password_hash(form.password.data),
-                form.name.data, "phone", form.email.data, 1111)
-            )
+        cursor = get_db().cursor()
+        cursor.execute(
+            "INSERT INTO {} (hashed, name, phone, email, zipcode)"
+            "VALUES (%s, %s, %s, %s, %s)".format(form.institution.data),
+            (generate_password_hash(form.password.data),
+            form.name.data, "phone", form.email.data, 1111)
+        )
         flash("Successfully created acount", Alert.success)
         return redirect(url_for('inst_login'))
     elif form.errors:
@@ -202,13 +201,13 @@ def complete_individual():
     form = donor.Form()
     user = users.get_current_user()
     if form.validate_on_submit():
-        with get_db() as cursor:
-            cursor.execute(
-                "INSERT INTO donor"
-                "(first_name, last_name, phone, zipcode, email)"
-                "VALUES (%s, %s, %s, %s, %s)",
-                (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
-            )
+        cursor = get_db().cursor()
+        cursor.execute(
+            "INSERT INTO donor"
+            "(first_name, last_name, phone, zipcode, email)"
+            "VALUES (%s, %s, %s, %s, %s)",
+            (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
+        )
         flash("Successfully created acount!", Alert.success)
         return redirect(url_for('index'))
     report_errors(form.errors)
@@ -222,13 +221,12 @@ def complete_individual():
 def inst_login():
     form = login.Form()
     if form.validate_on_submit():
-        row = None
-        with get_db() as cursor:
-            cursor.execute(
-                "SELECT id, hashed FROM {} WHERE email=%s;".format(form.institution.data),
-                (form.email.data,)
-            )
-            row = cursor.fetchone()
+        cursor = get_db().cursor()
+        cursor.execute(
+            "SELECT id, hashed FROM {} WHERE email=%s;".format(form.institution.data),
+            (form.email.data,)
+        )
+        row = cursor.fetchone()
         if not row:
             flash(
                 'Unable to find account under email "{}"'.format(form.email.data),
@@ -276,15 +274,15 @@ def dashboard():
     if g.account_type == 'donor':
         return ''
     else:
-        with get_db() as cursor:
-            cursor.execute(
-                "SELECT * FROM {} WHERE id=%s".format(g.account_type),
-                (g.account_id,)
-            )
-            return render_template(
-                'dashboard.html',
-                record=cursor.fetchone()
-            )
+        cursor = get_db().cursor()
+        cursor.execute(
+            "SELECT * FROM {} WHERE id=%s".format(g.account_type),
+            (g.account_id,)
+        )
+        return render_template(
+            'dashboard.html',
+            record=cursor.fetchone()
+        )
             
 @app.route('/events/create', methods=['GET', 'POST'])
 def createevent():

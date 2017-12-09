@@ -4,15 +4,15 @@ import os, logging
 import MySQLdb
 
 
-production = bool(os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine/'))
-if production:
+PRODUCTION = bool(os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine/'))
+if PRODUCTION:
     logging.info("Detected production environment")
 else:
     logging.info("Detected local environment")
 
 # Flask configuration settings
 SECRET_KEY = os.urandom(24)
-DEBUG = not production
+DEBUG = not PRODUCTION
 
 LOCAL_DB_CONNECTION = {
     'user': os.environ.get('CLOUDSQL_USER'),
@@ -29,9 +29,7 @@ LIVE_DB_CONNECTION = {
     'unix_socket': '/cloudsql/{}'.format(os.environ.get('CLOUDSQL_CONNECTION_NAME')),
 }
 
-if production:
-    logging.info("Database host: {}".format(LIVE_DB_CONNECTION['host']))
+if PRODUCTION:
     DB_CONNECTION = LIVE_DB_CONNECTION
 else:
-    logging.info("Database host: {}".format(LOCAL_DB_CONNECTION['host']))
     DB_CONNECTION = LOCAL_DB_CONNECTION
