@@ -11,7 +11,7 @@ class Event(ndb.Model):
     published = ndb.BooleanProperty(default=False)
     start_date = ndb.DateTimeProperty(required=True)
     end_date = ndb.DateTimeProperty(required=True)
-    scheduled_for_deletion = ndb.BooleanProperty(default=True)
+    scheduled_for_deletion = ndb.BooleanProperty(default=False)
 
 def formatted_start_date(event):
     event.start_date.strftime("%B %d, %Y at %I:%M %p")

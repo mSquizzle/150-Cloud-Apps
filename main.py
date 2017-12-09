@@ -4,8 +4,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import pymysql
 import datetime
-from event import events, create, edit
+from event import events, create, update
 
+import logging
 from forms import login, institution, donor
 import os, re
 from functools import wraps, partial
@@ -297,7 +298,8 @@ def createevent():
             apt_slot=15,
             published=False,
             start_date=form.start_date.data,
-            end_date = form.end_date.data
+            end_date = form.end_date.data,
+            scheduled_for_deletion = False
         )
         new_event.put()
         current_date = new_event.start_date
@@ -316,28 +318,44 @@ def createevent():
             report_errors(form.errors)
         return render_template("events/create.html", form=form)
 
-@app.route('/events/edit', methods=['GET', 'POST'])
+@app.route('/events/edit', methods=['GET'])
 def editevent():
     event_id = None
-    if request.method == 'POST':
-        test = 22
-    #    event_id = request.form['eid']
-    else:
-        event_id = request.args['eid']
-    event=None
+    event= None
+    form=None
+    event_id = request.args['eid']
     if event_id:
         event_long = long(event_id)
         possible_event = events.Event.get_by_id(event_long)
         event=possible_event
-    form = edit.Form(inst_id="this_is_a_test")
-    if form.validate_on_submit() and event:
-        event.location = form.location.data
-        event.details = form.location.data
-        event.put()
-        flash("Event details updated successfully", Alert.success)
-        return redirect(url_for("viewevent", eid=event.key.id()))
+        form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
+    else:
+        report_errors(form.errors)
     return render_template("events/edit.html", form=form, event=event)
 
+@app.route('/events/update', methods=['POST'])
+def updateevent():
+    form = update.Form()
+    if request.values.has_key('event_id'):
+        update.event_id = request.values['event_id']
+    eid = None
+    if form.validate_on_submit():
+        event_long = long(form.data['event_id'])
+        logging.info("event long")
+        logging.info(event_long)
+        possible_event = events.Event.get_by_id(event_long)
+        if possible_event:
+            event = possible_event
+            event.location = form.location.data
+            event.description = form.description.data
+            event.put()
+            flash("Event details updated successfully", Alert.success)
+            return redirect(url_for('viewevent', eid=event.key.id()))
+    else:
+        report_errors(form.errors)
+        if form.data.has_key('event_id'):
+            eid = form.data['event_id']
+    return redirect(url_for('viewevent', eid=eid))
 
 @app.route('/events/delete', methods=['POST'])
 def deleteevent():
@@ -351,9 +369,17 @@ def deleteevent():
             flash("Event removed.", Alert.success)
     return redirect("")
 
-@app.route("/events/view")
+@app.route('/events/publish', methods=['POST'])
+def publishevent():
+    event_id = None
+
+
+@app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
-    event_id = request.args['eid']
+    if request.values.has_key('eid'):
+        event_id = request.values['eid']
+    else:
+        event_id = None
     event = None
     time_slots = None
     if event_id:
