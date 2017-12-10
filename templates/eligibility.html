@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="page-header">
+    <h1>Please Complete Your Donor Account</h1>
+</div>
+
+<form method="post" action="{{ url_for('eligibility_questionaire') }}">
+    {{ form.csrf_token }}
+
+    {{ form.age_min.label }}
+    <div class="form-group">
+        {{ form.age_min }}
+    </div>
+    {{ form.age_max.label }}
+    <div class="form-group">
+        {{ form.age_max }}
+    </div>
+    {{ form.weight_min.label }}
+    <div class="form-group">
+        {{ form.weight_min }}
+    </div>
+    {{ form.medication.label }}
+    <div class="form-group">
+        {{ form.medication }}
+    </div>
+    {{ form.travel.label }}
+    <div class="form-group">
+        {{ form.travel }}
+    </div>
+    {{ form.infection.label }}
+    <div class="form-group">
+        {{ form.infection }}
+    </div>
+    {{ form.recent_donation.label }}
+    <div class="form-group">
+        {{ form.recent_donation }}
+    </div>
+    <input type="submit" class="btn btn-primary btn-large" value="Submit">
+</form>
+
+{% endblock %}

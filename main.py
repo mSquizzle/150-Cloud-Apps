@@ -1,17 +1,19 @@
+import os, re, datetime, urllib, requests, logging
+from functools import wraps, partial
+
+import requests
+from requests_toolbelt.adapters import appengine
+from google.appengine.api import users
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
-from werkzeug.security import generate_password_hash, check_password_hash
-from google.appengine.api import users
 import datetime
 import urllib
 import json
 from event import events, create, update
-import requests
-from requests_toolbelt.adapters import appengine
-import logging
-from forms import login, institution, donor, radius
-import os, re
-from functools import wraps, partial
+
+from forms import login, institution, donor, radius, eligibility
+from event import events, create, update
 
 app = Flask (__name__)
 app.config.from_pyfile('./config.py')
@@ -135,23 +137,29 @@ def login_required(func):
         return func(*args, **kwargs)
     return decorated_view
 
-def _required(func, arg):
+def _required(func, group):
     @wraps(func)
     def decorated_view(*args, **kwargs):
-        if not g.get("authenticated") or g.get("account_type") != arg:
+        if not g.get("authenticated") or g.get("account_type") not in group:
             abort(401)
         return func(*args, **kwargs)
     return decorated_view
 
-donor_required = partial(_required, arg="donor")
+donor_required = partial(_required, group=["donor"])
 
-bank_required = partial(_required, arg="bank")
+bank_required = partial(_required, group=["bank"])
 
-hospital_required = partial(_required, arg="hospital")
+hospital_required = partial(_required, group=["hospital"])
+
+institution_required = partial(_required, group=["hospital", "bank"])
 
 @app.errorhandler(401)
 def unauthorized(e):
     return render_template('401.html'), 401
+
+@app.errorhandler(404)
+def unauthorized(e):
+    return render_template('404.html'), 404
 
 ################################################################################
 #                                  Routing                                     #
@@ -246,8 +254,7 @@ def inst_login():
             return redirect(url_for('index'))
         else:
             flash('Invalid password', Alert.warning)
-    elif form.errors:
-        report_errors(form.errors)
+    report_errors(form.errors)
     return render_template(
         'accounts/login.html',
         form=form
@@ -290,6 +297,29 @@ def dashboard():
             'dashboard.html',
             record=cursor.fetchone()
         )
+
+
+@app.route('/eligibility', methods=["GET", "POST"])
+@donor_required
+def eligibility_questionaire():
+    form = eligibility.Form()
+    if form.validate_on_submit():
+        if form.age_min.data == "no":
+            flash("Check your local state guidelines, some states let you donate starting at 16. If you are 17, you may donate blood, but additional requirements apply; please check your state for guidelines", Alert.info)
+        if form.age_max.data == "no":
+            flash("Check your local state guidelines, some states require a doctor's note declaring you are in good health", Alert.info)
+        if form.weight_min.data == "no":
+            flash("Unfortunately, you must weigh at least 110lbs to donate blood", Alert.info)
+        if form.medication.data == "yes":
+            flash("Bring list of all your medications with you to the donation location", Alert.info)
+        if form.travel.data == "yes":
+            flash("Bring list of all your travels, including which countries and when", Alert.info)
+        if form.infection.data == "yes":
+            flash("Individuals with an infection may not donate blood", Alert.info)
+        if form.recent_donation.data == "yes":
+            flash("Please wait until at least 56 days before donating blood again", Alert.info)
+    report_errors(form.errors)
+    return render_template('eligibility.html', form=form)
             
 
 #### BEGIN EVENTS ####
@@ -316,7 +346,8 @@ def createevent():
                 start_time = current_date,
                 can_be_scheduled=True,
                 event=new_event.key,
-                parent=new_event.key
+                parent=new_event.key,
+                scheduled_for_deletion=False
             )
             time_slot.put()
             current_date = current_date + datetime.timedelta(minutes=15)
@@ -391,6 +422,8 @@ def publishevent():
 
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
+    current_apt=None
+    current_time = datetime.datetime.now()
     if request.values.has_key('eid'):
         event_id = request.values['eid']
     else:
@@ -405,18 +438,22 @@ def viewevent():
         embed_params = {'key': get_maps_key(), 'q': event.location}
         url_params = urllib.urlencode(embed_params)
         if event and users.get_current_user():
-            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).fetch(1)
+            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).get()
             time_slots = events.list_open_slots(event)
-    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params)
+    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params, current_time=current_time)
 
 @app.route("/events/schedule", methods=['POST'])
 def scheduleapt():
     event_id = None
+    logging.info(request.values.has_key('tsid'))
+    logging.info(request.values.has_key('eid'))
+    logging.info(users.get_current_user())
     if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user():
         user_id = users.get_current_user().user_id()
         event_id = request.values['eid']
         apt_id = request.values['tsid']
-        time_slot = events.TimeSlot.get_by_id(long(apt_id))
+        time_slot = events.get_time_slot(apt_id, event_id)
+        logging.info(time_slot)
         if time_slot and time_slot.can_be_scheduled and not time_slot.scheduled_for_deletion:
             if time_slot.user_id:
                 if time_slot.user_id == user_id:
@@ -432,6 +469,10 @@ def scheduleapt():
         else:
             flash("Unable to find specified timeslot", Alert.danger)
     return redirect(url_for("viewevent", eid=event_id))
+
+
+#### END EVENTS ####
+
 
 @app.route('/find_donors', methods=['GET', 'POST'])
 def find_donors():

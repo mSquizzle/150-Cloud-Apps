@@ -23,18 +23,12 @@
         {{ form.zipcode(class="form-control") }}
     </div>
     {{ form.outreach.label }}
-    <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
-        {% for subfield in form.outreach %}
-          {{subfield.label }}
-          {{ subfield }}
-        {% endfor %}
+    <div class="form-group">
+        {{ form.outreach }}
     </div>
     {{ form.contact.label }}
-    <div class="form-group btn-group btn-group-justified" id="radio-buttons" data-toggle="buttons" role="group">
-        {% for subfield in form.contact %}
-          {{subfield.label }}
-          {{ subfield }}
-        {% endfor %}
+    <div class="form-group">
+        {{ form.contact }}
     </div>
     <input type="submit" class="btn btn-primary btn-large" value="Submit">
 </form>
