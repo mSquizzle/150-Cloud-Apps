@@ -27,9 +27,9 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
 
 ### Database Proxy
 - [Basic project setup](https://cloud.google.com/sql/docs/mysql/quickstart#before-you-begin)
-  1. Create GAE Project
+  1. Create Google App Engine Project
   1. Enable billing
-  1. Enable CloudSQL API
+  1. Enable Cloud SQL API
 - [Set up a Cloud SQL MySQL database](https://cloud.google.com/sql/docs/mysql/quickstart#create_a_title_short_instance)
   1. Create second generation Cloud SQL instance within the same GAE project
   1. Set a `root` password for the instance
@@ -45,12 +45,18 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
   - `CLOUDSQL_PASSWORD` is the root password for your MySQL instance
   - `CLOUDSQL_CONNECTION_NAME` is the Cloud SQL connection in the format `<PROJECT_ID>:<REGION>:<INSTANCE_ID>`
   - `PROJECT_ID` is the project; should be the same as the first part of the `CLOUDSQL_CONNECTION_NAME`
-- Define the SQL tables
-  - If you have a MySQL client installed run `sql/setup.sh`
+- Define the SQL tables once the proxy is running
+  - If you have a MySQL client installed run `sql/setup.sh` to connect to the proxy, and create the database and tables 
   - Otherwise, log into the Cloud SQL console and run the `sql/mrs.sql` commands manualy
   
+For the last step, you need to be running the Cloud SQL proxy. This can be done by running: `cloud_sql_proxy -instances=<PROJECT_ID>:<REGION>:<INSTANCE_ID>=tcp:3306` (although the `cloud_sql_proxy` program may have to be invoked differently depending on how you installed it)
+
+### API Keys
+- TODO: Google Maps API key info
+- TODO: Zip code API key info goes here
+
 ### Development Server
-Once the libraries and database proxy are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
+Once the libraries, database, database proxy, and API keys are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
 
 ## Deploying
 Following the local setup will also prepare your application for deploying with a few caveats:

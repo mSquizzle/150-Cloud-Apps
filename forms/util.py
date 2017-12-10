@@ -27,7 +27,10 @@ class InlineRadioWidget(object):
         html = ['<div class="form-group">']
         for val, label, selected in field.iter_choices():
             html.append('<label class="radio-inline">')
-            html.append('<input type="radio" name="' + field.id + '" value="' + val + '" autocomplete="off">' + label)
+            if selected: 
+                html.append('<input type="radio" name="' + field.id + '" value="' + val + '" autocomplete="off" checked="true">' + label)
+            else:
+                html.append('<input type="radio" name="' + field.id + '" value="' + val + '" autocomplete="off">' + label)
             html.append('</label>')
         html.append('</div>')
         return HTMLString(u'\n'.join(html))
