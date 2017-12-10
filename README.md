@@ -50,9 +50,13 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
   - Otherwise, log into the Cloud SQL console and run the `sql/mrs.sql` commands manualy
   
 For the last step, you need to be running the Cloud SQL proxy. This can be done by running: `cloud_sql_proxy -instances=<PROJECT_ID>:<REGION>:<INSTANCE_ID>=tcp:3306` (although the `cloud_sql_proxy` program may have to be invoked differently depending on how you installed it)
-  
+
+### API Keys
+- TODO: Google Maps API key info
+- TODO: Zip code API key info goes here
+
 ### Development Server
-Once the libraries and database proxy are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
+Once the libraries, database, database proxy, and API keys are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
 
 ## Deploying
 Following the local setup will also prepare your application for deploying with a few caveats:
