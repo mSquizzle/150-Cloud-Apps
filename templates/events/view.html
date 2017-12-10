@@ -4,6 +4,15 @@
     <h1>Viewing Event</h1>
 </div>
     {% if event %}
+        {% if event.end_date < current_time %}
+            <div class="alert alert-warning">
+                This event has already ended.
+            </div>
+        {% elif event.start_date < current_time and event.end_date > current_time %}
+            <div class="alert alert-success">
+                This event is in progress.
+            </div>
+        {% endif %}
         <iframe
           width="600"
           height="450"

@@ -29,7 +29,8 @@ class TimeSlot(ndb.Model):
 def list_events(limit=10):
     q = Event.query().order(Event.end_date).order(Event.start_date)\
         .filter(Event.end_date > datetime.datetime.now())\
-        .filter(Event.scheduled_for_deletion==False)#.filter(Event.published==True)
+        .filter(Event.scheduled_for_deletion==False)\
+        .filter(Event.published==True)
     return q.fetch(limit)
 
 def list_open_slots(event):

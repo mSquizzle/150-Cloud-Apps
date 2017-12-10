@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
-import MySQLdb
+#import MySQLdb
 import datetime
 import urllib
 from event import events, create, update
@@ -388,6 +388,8 @@ def publishevent():
 
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
+    current_apt=None
+    current_time = datetime.datetime.now()
     if request.values.has_key('eid'):
         event_id = request.values['eid']
     else:
@@ -404,7 +406,7 @@ def viewevent():
         if event and users.get_current_user():
             current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).fetch(1)
             time_slots = events.list_open_slots(event)
-    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params)
+    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params, current_time=current_time)
 
 @app.route("/events/schedule", methods=['POST'])
 def scheduleapt():

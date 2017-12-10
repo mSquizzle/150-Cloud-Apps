@@ -12,6 +12,13 @@ indexes:
 
 - kind: Event
   properties:
+  - name: published
+  - name: scheduled_for_deletion
+  - name: end_date
+  - name: start_date
+
+- kind: Event
+  properties:
   - name: scheduled_for_deletion
   - name: end_date
   - name: start_date
