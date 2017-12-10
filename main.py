@@ -290,20 +290,18 @@ def emailadmin():
 
 
 @app.route('/dashboard')
-@login_required
+@institution_required
 def dashboard():
-    if g.account_type == 'donor':
-        return ''
-    else:
-        cursor = get_db().cursor()
-        cursor.execute(
-            "SELECT * FROM {} WHERE id=%s".format(g.account_type),
-            (g.account_id,)
-        )
-        return render_template(
-            'dashboard.html',
-            record=cursor.fetchone()
-        )
+    cursor = get_db().cursor()
+    cursor.execute(
+        "SELECT O_neg, O_pos, A_neg, A_pos, B_neg, B_pos, AB_neg, AB_pos "
+        "FROM {} WHERE id=%s".format(g.account_type),
+        (g.account_id,)
+    )
+    return render_template(
+        'dashboard.html',
+        record=cursor.fetchone()
+    )
 
 
 @app.route('/eligibility', methods=["GET", "POST"])
@@ -325,7 +323,7 @@ def eligibility_questionaire():
             flash("Bring list of all your medications with you to the donation location", Alert.info)
             status = "Unknown" if status != "Ineligible" else "Ineligible"
         if form.travel.data == "yes":
-            flash("Bring list of all your travels, including which countries and when", Alert.info)
+            flash("Bring list of all your travels, including which countries you visited, and when", Alert.info)
             status = "Unknown" if status != "Ineligible" else "Ineligible"
         if form.infection.data == "yes":
             flash("Individuals with an infection may not donate blood", Alert.info)
