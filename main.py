@@ -10,9 +10,10 @@ from flask import Flask, render_template, request, url_for, flash, \
 import datetime
 import urllib
 import json
+import webapp2
 from event import events, create, update
-
-from forms import login, institution, donor, radius, eligibility
+from string import Template
+from forms import login, institution, donor, radius, eligibility, email
 from event import events, create, update
 
 app = Flask (__name__)
@@ -278,8 +279,14 @@ def settings():
 
 
 @app.route('/emailadmin')
+@bank_required
+@login_required
 def emailadmin():
-    return render_template('emailadmin.html', user=users.get_current_user())
+    form = email.Form()
+
+    
+    return render_template('emailadmin.html', user=users.get_current_user(), \
+				form=form)
 
 
 @app.route('/dashboard')
