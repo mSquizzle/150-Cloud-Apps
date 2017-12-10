@@ -21,6 +21,17 @@ indexes:
   properties:
   - name: scheduled_for_deletion
   - name: end_date
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: scheduled_for_deletion
+  - name: end_date
+
+- kind: Event
+  properties:
+  - name: scheduled_for_deletion
+  - name: end_date
   - name: start_date
 
 - kind: Event

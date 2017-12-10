@@ -171,6 +171,7 @@ def index():
             'location' : event.location,
             'date': date.strftime("%B %d, %Y at %I:%M %p"),
             'start_date' : event.start_date,
+            'end_date' : event.end_date,
             'key' : event.key
         })
     return render_template('index.html', event_list=event_list, current_time=get_current_time())
@@ -360,7 +361,11 @@ def editevent():
         event_long = long(event_id)
         possible_event = events.Event.get_by_id(event_long)
         event=possible_event
-        form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
+        if possible_event:
+            if possible_event.end_date < get_current_time():
+                flash("This event is over. It cannot be edited.", Alert.danger)
+                return redirect(url_for("viewevent", eid=event_id))
+            form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
     else:
         report_errors(form.errors)
     return render_template("events/edit.html", form=form, event=event)
@@ -412,6 +417,23 @@ def publishevent():
             event.put()
             flash('Event is now available to the public!', Alert.success)
     return redirect(url_for('viewevent', eid=eid))
+
+@app.route('/events/manage')
+def manageevent():
+    upcoming_events = events.list_configured_events(10)
+    event_list = []
+    for event in upcoming_events:
+        date = events.get_as_eastern(event.start_date)
+        event_list.append({
+            'location': event.location,
+            'date': date.strftime("%B %d, %Y at %I:%M %p"),
+            'start_date': event.start_date,
+            'end_date': event.end_date,
+            'is_public' : event.published,
+            'key': event.key,
+            'is_over':event.end_date < get_current_time()
+        })
+    return render_template('events/manage.html', event_list=event_list, current_time=get_current_time())
 
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():

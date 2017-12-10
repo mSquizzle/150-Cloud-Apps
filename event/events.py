@@ -38,6 +38,12 @@ def list_events(limit=10):
         .filter(Event.published==True)
     return q.fetch(limit)
 
+def list_configured_events(limit=10, offset=0):
+    q = Event.query().order(-Event.end_date)\
+        .filter(Event.scheduled_for_deletion == False)
+    return q.fetch(limit, offset=offset)
+
+
 def list_open_slots(event):
     if event:
         q = TimeSlot.query().filter(TimeSlot.event == event.key)\

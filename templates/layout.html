@@ -23,7 +23,7 @@
           {% if g.authenticated %}
           <li><a href="{{ url_for('settings') }}">Settings</a></li>
           {% if g.get('account_type') == 'bank' %}
-             <li><a href="{{ url_for('createevent') }}">Create Event</a></li>
+          <li><a href="{{ url_for('manageevent') }}"><span class="glyphicon glyphicon-calendar"></span> Manage Events</a></li>
           {% endif %}
           <li><a href="{{ g.logout }}">Logout</a></li>
           {% else %}
