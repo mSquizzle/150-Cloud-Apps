@@ -496,11 +496,14 @@ def find_donors():
   #	return formatted_zipcode
         with get_db().cursor() as cursor:
             cursor.execute(
-                "SELECT zipcode FROM donor WHERE zipcode \
+                "SELECT id, email, phone, zipcode,contact, outreach \
+		 FROM donor WHERE zipcode \
 		 IN({zipcodes})".format(zipcodes=formatted_zipcode) 
             )
+	results = cursor.fetchall()
         flash("We found some donors", Alert.success)
-        return redirect(url_for('find_donors'))
+	return results
+   #     return redirect(url_for('find_donors'))
     elif form.errors:
         report_errors(form.errors)
   #  form.radius.data = request.args.get("inst")
