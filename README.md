@@ -41,17 +41,20 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
   1. Download the [binary](https://cloud.google.com/sql/docs/mysql/sql-proxy#install)
   1. Make it executable with `chmod +x cloud_sql_proxy`
   1. For long-term it makes sense to move the binary to a directory like `/usr/local/bin`
-- Set environment variable for the Cloud SQL root password
-  1. Set`CLOUDSQL_PASSWORD` to your Cloud SQL root password in `app.yaml` by adding a [directive](https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml#Python_app_yaml_Defining_environment_variables)
-  ```
-  env_variables:
-    CLOUDSQL_PASSWORD: 'my_root_pass'
-  ```
-
+- Set appropriate [environment variables](https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml#Python_app_yaml_Defining_environment_variables) in `app.yaml`
+  - `CLOUDSQL_PASSWORD` is the root password for your MySQL instance
+  - `CLOUDSQL_CONNECTION_NAME` is the Cloud SQL connection in the format `<PROJECT_ID>:<REGION>:<INSTANCE_ID>`
+  - `PROJECT_ID` is the project; should be the same as the first part of the `CLOUDSQL_CONNECTION_NAME`
+- Define the SQL tables
+  - If you have a MySQL client installed run `sql/setup.sh`
+  - Otherwise, log into the Cloud SQL console and run the `sql/mrs.sql` commands manualy
+  
 ### Development Server
 Once the libraries and database proxy are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
 
 ## Deploying
-`appengine_config.py` tells the Google App Engine to look in the folder `lib/` for vendor libraries. The production runtime includes some [third party libraries](https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27) but any others should be installed to this directory before deploying the project with the command `pip install -t lib -r requirements.txt`.
+Following the local setup will also prepare your application for deploying with a few caveats:
+- Dependencies must be installed in the `lib/` directory (use `pip install -t lib -r requirements.txt`)
+- Environment varibles must be also set in the `app.yaml` file (you can get away with just shell variables locally)
 
-Deploy the application with `gcloud app deploy`.
+Deploy the application with `gcloud app deploy`. Take care of the datastore indices with `gcloud app deploy index.yaml`
