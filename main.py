@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from google.appengine.api import users
 import datetime
 import urllib
+import json
 from event import events, create, update
 import requests
 from requests_toolbelt.adapters import appengine
@@ -42,7 +43,8 @@ def get_db():
 def get_maps_key():
     #todo - turn into environment variable
     return 'AIzaSyAfvS-E0xWdXEUvCryyyryLZAYNHAlGt5Y'
-
+def get_zipcode_key():
+    return '7FhkHmuRBeyrwzqsdnBqZQEJTXVOekSakAs9zD226ePAcfxCT3TypBriarNbaYyW'
 
 # TODO: handle possibility of being logged in as both user types
 @app.before_request
@@ -438,15 +440,24 @@ def find_donors():
     """
     form = radius.Form()
     if form.validate_on_submit():
-	parameters = {"api_key": 'ZIPCODE_API_KEY',"format": "radius.json", \
-	     "zipcode": form.zipcode.data, "distance": form.radius.data, \
-	      "units": "miles?minimal" }
-	response = requests.get("https://www.zipcodeapi.com/rest", params=parameters)
-  #      if query comes back empty, then say there are no donors 
-  #      with get_db().cursor() as cursor:
-  #          cursor.execute(
-  #              "SELECT zipcode FROM donor WHERE zipcode IN(all the zipcodes returned from api call) 
-  #          )
+#	distance = '{:09.2f}'.format(form.radius.data)
+	url = "https://www.zipcodeapi.com/rest/{key}/radius.json/{zipcode}/{distance}/miles?minimal".format(key=get_zipcode_key(), \
+	   zipcode='{:05d}'.format(form.zipcode.data),\
+	   distance='{:03d}'.format(form.radius.data))
+	
+	response = requests.get(url)
+  	decoded = json.loads(response.text)
+  #      import pdb; pdb.set_trace()
+	zipcode_string = str(decoded)
+	formatted_zipcode = zipcode_string.replace("u'",'').replace("'",'')\
+	    .replace('[','').replace(']','').replace('{','').replace('}','')\
+	    .replace('zip_codes:', '')
+  #	return formatted_zipcode
+        with get_db().cursor() as cursor:
+            cursor.execute(
+                "SELECT zipcode FROM donor WHERE zipcode \
+		 IN({zipcodes})".format(zipcodes=formatted_zipcode) 
+            )
         flash("We found some donors", Alert.success)
         return redirect(url_for('find_donors'))
     elif form.errors:
