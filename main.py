@@ -132,19 +132,21 @@ def login_required(func):
         return func(*args, **kwargs)
     return decorated_view
 
-def _required(func, arg):
+def _required(func, group):
     @wraps(func)
     def decorated_view(*args, **kwargs):
-        if not g.get("authenticated") or g.get("account_type") != arg:
+        if not g.get("authenticated") or g.get("account_type") not in group:
             abort(401)
         return func(*args, **kwargs)
     return decorated_view
 
-donor_required = partial(_required, arg="donor")
+donor_required = partial(_required, group=["donor"])
 
-bank_required = partial(_required, arg="bank")
+bank_required = partial(_required, group=["bank"])
 
-hospital_required = partial(_required, arg="hospital")
+hospital_required = partial(_required, group=["hospital"])
+
+institution_required = partial(_required, group=["hospital", "bank"])
 
 @app.errorhandler(401)
 def unauthorized(e):
@@ -247,8 +249,7 @@ def inst_login():
             return redirect(url_for('index'))
         else:
             flash('Invalid password', Alert.warning)
-    elif form.errors:
-        report_errors(form.errors)
+    report_errors(form.errors)
     return render_template(
         'accounts/login.html',
         form=form
@@ -291,12 +292,29 @@ def dashboard():
             'dashboard.html',
             record=cursor.fetchone()
         )
-@app.route('/eligibility')
+
+
+@app.route('/eligibility', methods=["GET", "POST"])
 @donor_required
 def eligibility_questionaire():
     form = eligibility.Form()
+    if form.validate_on_submit():
+        if form.age_min.data == "no":
+            flash("Check your local state guidelines, some states let you donate starting at 16. If you are 17, you may donate blood, but additional requirements apply; please check your state for guidelines", Alert.info)
+        if form.age_max.data == "no":
+            flash("Check your local state guidelines, some states require a doctor's note declaring you are in good health", Alert.info)
+        if form.weight_min.data == "no":
+            flash("Unfortunately, you must weigh at least 110lbs to donate blood", Alert.info)
+        if form.medication.data == "yes":
+            flash("Bring list of all your medications with you to the donation location", Alert.info)
+        if form.travel.data == "yes":
+            flash("Bring list of all your travels, including which countries and when", Alert.info)
+        if form.infection.data == "yes":
+            flash("Individuals with an infection may not donate blood", Alert.info)
+        if form.recent_donation.data == "yes":
+            flash("Please wait until at least 56 days before donating blood again", Alert.info)
+    report_errors(form.errors)
     return render_template('eligibility.html', form=form)
-
             
 
 #### BEGIN EVENTS ####

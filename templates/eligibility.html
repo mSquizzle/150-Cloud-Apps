@@ -4,7 +4,7 @@
     <h1>Please Complete Your Donor Account</h1>
 </div>
 
-<form method="post" action="{{ url_for('index') }}">
+<form method="post" action="{{ url_for('eligibility_questionaire') }}">
     {{ form.csrf_token }}
 
     {{ form.age_min.label }}
