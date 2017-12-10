@@ -304,20 +304,31 @@ def dashboard():
 def eligibility_questionaire():
     form = eligibility.Form()
     if form.validate_on_submit():
+        status = "Eligible"
         if form.age_min.data == "no":
             flash("Check your local state guidelines, some states let you donate starting at 16. If you are 17, you may donate blood, but additional requirements apply; please check your state for guidelines", Alert.info)
+            status = "Ineligible"
         if form.age_max.data == "no":
             flash("Check your local state guidelines, some states require a doctor's note declaring you are in good health", Alert.info)
+            status = "Unknown" if status != "Ineligible" else "Ineligible"
         if form.weight_min.data == "no":
             flash("Unfortunately, you must weigh at least 110lbs to donate blood", Alert.info)
+            status = "Ineligible"
         if form.medication.data == "yes":
             flash("Bring list of all your medications with you to the donation location", Alert.info)
+            status = "Unknown" if status != "Ineligible" else "Ineligible"
         if form.travel.data == "yes":
             flash("Bring list of all your travels, including which countries and when", Alert.info)
+            status = "Unknown" if status != "Ineligible" else "Ineligible"
         if form.infection.data == "yes":
             flash("Individuals with an infection may not donate blood", Alert.info)
+            status = "Ineligible"
         if form.recent_donation.data == "yes":
             flash("Please wait until at least 56 days before donating blood again", Alert.info)
+            status = "Ineligible"
+        cursor = get_db().cursor()
+        cursor.execute("UPDATE donor SET eligibility=%s WHERE id=%s", (status, g.account_id))
+        return redirect(url_for('index'))
     report_errors(form.errors)
     return render_template('eligibility.html', form=form)
             
