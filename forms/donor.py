@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, RadioField, DateField, IntegerField, validators
 
+from util import InlineRadioWidget
+
 class Form(FlaskForm):
     first_name = StringField('First Name', validators=[
         validators.DataRequired('First name field is required'),
@@ -20,9 +22,9 @@ class Form(FlaskForm):
         validators=[validators.DataRequired()], choices=[
         ('yes', 'Yes'),
         ('no', 'No')
-    ])
+    ], widget=InlineRadioWidget())
     contact = RadioField("What is your preferred method of communication?",
         validators=[validators.DataRequired()], choices=[
         ('email', 'Email'),
         ('phone', 'Phone')
-    ])
+    ], widget=InlineRadioWidget())

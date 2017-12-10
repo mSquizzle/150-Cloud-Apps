@@ -1,16 +1,15 @@
-from flask import Flask, render_template, request, url_for, flash, \
-        session, g, redirect, abort
-from werkzeug.security import generate_password_hash, check_password_hash
-from google.appengine.api import users
-import datetime
-import urllib
-from event import events, create, update
+import os, re, datetime, urllib, requests, logging
+from functools import wraps, partial
+
 import requests
 from requests_toolbelt.adapters import appengine
-import logging
-from forms import login, institution, donor, radius
-import os, re
-from functools import wraps, partial
+from google.appengine.api import users
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, render_template, request, url_for, flash, \
+        session, g, redirect, abort
+
+from forms import login, institution, donor, radius, eligibility
+from event import events, create, update
 
 app = Flask (__name__)
 app.config.from_pyfile('./config.py')
@@ -292,6 +291,12 @@ def dashboard():
             'dashboard.html',
             record=cursor.fetchone()
         )
+@app.route('/eligibility')
+@donor_required
+def eligibility_questionaire():
+    form = eligibility.Form()
+    return render_template('eligibility.html', form=form)
+
             
 
 #### BEGIN EVENTS ####
