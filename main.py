@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 import datetime
+import pytz
 import urllib
 from event import events, create, update
 
@@ -45,6 +46,8 @@ def get_maps_key():
     #todo - turn into environment variable
     return 'AIzaSyAfvS-E0xWdXEUvCryyyryLZAYNHAlGt5Y'
 
+def get_current_time():
+    return datetime.datetime.now()
 
 # TODO: handle possibility of being logged in as both user types
 @app.before_request
@@ -163,8 +166,17 @@ def unauthorized(e):
 
 @app.route('/')
 def index():
-    event_list = events.list_events()
-    return render_template('index.html', event_list=event_list, current_time=datetime.datetime.now())
+    upcoming_events = events.list_events()
+    event_list = []
+    for event in upcoming_events:
+        date = events.get_as_eastern(event.start_date)
+        event_list.append({
+            'location' : event.location,
+            'date': date.strftime("%B %d, %Y at %I:%M %p"),
+            'start_date' : event.start_date,
+            'key' : event.key
+        })
+    return render_template('index.html', event_list=event_list, current_time=get_current_time())
 
 
 @app.route('/faq')
@@ -299,7 +311,6 @@ def dashboard():
 def eligibility_questionaire():
     form = eligibility.Form()
     return render_template('eligibility.html', form=form)
-
             
 
 #### BEGIN EVENTS ####
@@ -308,6 +319,11 @@ def createevent():
     #todo - need to be able to extract from the session - not sticking right now
     form = create.Form(inst_id="this_is_a_test")
     if form.validate_on_submit():
+        logging.info(form.start_date.data)
+        # form takes data in utc, we're using eastern times
+        # todo - enable timezone based on user preferences
+        start_date = form.start_date.data + datetime.timedelta(hours=5)
+        end_date = form.end_date.data + datetime.timedelta(hours=5)
         new_event = events.Event(
             inst_id = form.inst_id.data,
             location = form.location.data,
@@ -315,13 +331,13 @@ def createevent():
             num_parallel=1,
             apt_slot=15,
             published=False,
-            start_date=form.start_date.data,
-            end_date = form.end_date.data,
+            start_date= start_date,
+            end_date = end_date,
             scheduled_for_deletion = False
         )
         new_event.put()
-        current_date = new_event.start_date
-        while current_date < form.end_date.data:
+        current_date = start_date
+        while current_date < end_date:
             time_slot = events.TimeSlot(
                 start_time = current_date,
                 can_be_scheduled=True,
@@ -403,6 +419,9 @@ def publishevent():
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
     current_apt=None
+    apt_url=None
+    start_date=None
+    end_date=None
     current_time = datetime.datetime.now()
     if request.values.has_key('eid'):
         event_id = request.values['eid']
@@ -410,6 +429,8 @@ def viewevent():
         event_id = None
     event = None
     url_params=None
+    apt_url=None
+    apt_time=None
     time_slots = None
     if event_id:
         event_long = long(event_id)
@@ -417,10 +438,42 @@ def viewevent():
         event = possible_event
         embed_params = {'key': get_maps_key(), 'q': event.location}
         url_params = urllib.urlencode(embed_params)
+        start_date=events.get_as_eastern(event.start_date)
+        end_date=events.get_as_eastern(event.end_date)
         if event and users.get_current_user():
-            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).get()
-            time_slots = events.list_open_slots(event)
-    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params, current_time=current_time)
+            current_apt = events.TimeSlot.query(ancestor=event.key)\
+                .filter(events.TimeSlot.user_id==users.get_current_user().user_id()).get()
+            if current_apt:
+                detail_url = request.base_url + '?eid='+event_id
+                apt_date = (current_apt.start_time).strftime("%Y%m%dT%H%M00Z")\
+                           +"/"+(current_apt.start_time+datetime.timedelta(minutes=30)).strftime("%Y%m%dT%H%M00Z")
+                details = 'For details, see %s' % detail_url
+                params = {
+                    'text' : "Blood Donation Appointment",
+                    'dates' : apt_date,
+                    'details' : details,
+                    'location' : event.location,
+                }
+                apt_url = urllib.urlencode(params)
+                apt_time=events.get_as_eastern(current_apt.start_time)
+            slots = events.list_open_slots(event)
+            time_slots = []
+            for slot in slots:
+                date = events.get_as_eastern(slot.start_time)
+                time_slots.append({
+                    'id' : slot.key.id(),
+                    'date' : date.strftime("%I:%M %p")
+                })
+    return render_template("events/view.html",
+                           event=event,
+                           time_slots=time_slots,
+                           current_apt=current_apt,
+                           url_params=url_params,
+                           current_time=current_time,
+                           apt_url=apt_url,
+                           apt_time=apt_time,
+                           start_date=start_date,
+                           end_date=end_date)
 
 @app.route("/events/schedule", methods=['POST'])
 def scheduleapt():

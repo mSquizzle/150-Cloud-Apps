@@ -1,4 +1,5 @@
 import datetime
+import pytz
 from google.appengine.ext import ndb
 
 class Event(ndb.Model):
@@ -15,6 +16,10 @@ class Event(ndb.Model):
 
 def formatted_start_date(event):
     event.start_date.strftime("%B %d, %Y at %I:%M %p")
+
+def get_as_eastern(utc_date):
+    utc_date = utc_date.replace(tzinfo=pytz.timezone("UTC"))
+    return utc_date.astimezone(tz=pytz.timezone("US/Eastern"))
 
 class TimeSlot(ndb.Model):
     user_id = ndb.StringProperty()

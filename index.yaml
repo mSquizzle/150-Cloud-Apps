@@ -33,7 +33,6 @@ indexes:
   - name: can_be_scheduled
   - name: event
   - name: scheduled_for_deletion
-  - name: user_id
   - name: start_time
 
 - kind: TimeSlot
@@ -41,6 +40,7 @@ indexes:
   - name: can_be_scheduled
   - name: event
   - name: scheduled_for_deletion
+  - name: user_id
   - name: start_time
 
 - kind: TimeSlot

@@ -55,3 +55,7 @@ Once the libraries and database proxy are setup the application can be started w
 `appengine_config.py` tells the Google App Engine to look in the folder `lib/` for vendor libraries. The production runtime includes some [third party libraries](https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27) but any others should be installed to this directory before deploying the project with the command `pip install -t lib -r requirements.txt`.
 
 Deploy the application with `gcloud app deploy`.
+
+### Indexes
+
+Before you can use your application in production, you must also ensure that the indexes that the Datastore uses have been created. These configurations are in index.yaml; deploy them using `gcloud app deploy index.yaml`. This will trigger your application to rebuild its indexes so queries can be run.
