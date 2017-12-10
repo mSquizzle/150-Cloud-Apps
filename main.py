@@ -221,7 +221,7 @@ def complete_individual():
             "INSERT INTO donor"
             "(first_name, last_name, phone, zipcode, email)"
             "VALUES (%s, %s, %s, %s, %s)",
-            (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
+            (form.first_name.data, form.last_name.data, form.phone.data, "{:05d}".format(form.zipcode.data), user.email())
         )
         flash("Successfully created acount!", Alert.success)
         return redirect(url_for('index'))
@@ -279,7 +279,7 @@ def settings():
 
 @app.route('/emailadmin')
 def emailadmin():
-    return render_template('emailadmin.html')
+    return render_template('emailadmin.html', user=users.get_current_user())
 
 
 @app.route('/dashboard')
@@ -481,7 +481,6 @@ def find_donors():
     """
     form = radius.Form()
     if form.validate_on_submit():
-#	distance = '{:09.2f}'.format(form.radius.data)
 	url = "https://www.zipcodeapi.com/rest/{key}/radius.json/{zipcode}/{distance}/miles?minimal".format(key=get_zipcode_key(), \
 	   zipcode='{:05d}'.format(form.zipcode.data),\
 	   distance='{:03d}'.format(form.radius.data))
