@@ -8,7 +8,7 @@ env_variables:
   CLOUDSQL_USER: "root"
   CLOUDSQL_DATABASE: "mrs"
   PROJECT_ID: ""
-
+  ZIPCODE_API_KEY: ""
 
 # [START handlers]
 handlers:
