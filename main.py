@@ -151,6 +151,10 @@ hospital_required = partial(_required, arg="hospital")
 def unauthorized(e):
     return render_template('401.html'), 401
 
+@app.errorhandler(404)
+def unauthorized(e):
+    return render_template('404.html'), 404
+
 ################################################################################
 #                                  Routing                                     #
 ################################################################################
