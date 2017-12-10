@@ -41,3 +41,9 @@ def list_open_slots(event):
             .filter(TimeSlot.start_time > datetime.datetime.now())
         return q.fetch()
     return None
+
+def get_time_slot(tsid, eid):
+    apt_long = int(tsid)
+    parent_key = ndb.Key(Event, int(eid))
+    time_slot = TimeSlot.get_by_id(apt_long, parent=parent_key)
+    return time_slot

@@ -313,7 +313,8 @@ def createevent():
                 start_time = current_date,
                 can_be_scheduled=True,
                 event=new_event.key,
-                parent=new_event.key
+                parent=new_event.key,
+                scheduled_for_deletion=False
             )
             time_slot.put()
             current_date = current_date + datetime.timedelta(minutes=15)
@@ -404,18 +405,22 @@ def viewevent():
         embed_params = {'key': get_maps_key(), 'q': event.location}
         url_params = urllib.urlencode(embed_params)
         if event and users.get_current_user():
-            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).fetch(1)
+            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).get()
             time_slots = events.list_open_slots(event)
     return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params, current_time=current_time)
 
 @app.route("/events/schedule", methods=['POST'])
 def scheduleapt():
     event_id = None
+    logging.info(request.values.has_key('tsid'))
+    logging.info(request.values.has_key('eid'))
+    logging.info(users.get_current_user())
     if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user():
         user_id = users.get_current_user().user_id()
         event_id = request.values['eid']
         apt_id = request.values['tsid']
-        time_slot = events.TimeSlot.get_by_id(long(apt_id))
+        time_slot = events.get_time_slot(apt_id, event_id)
+        logging.info(time_slot)
         if time_slot and time_slot.can_be_scheduled and not time_slot.scheduled_for_deletion:
             if time_slot.user_id:
                 if time_slot.user_id == user_id:

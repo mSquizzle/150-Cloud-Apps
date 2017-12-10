@@ -19,15 +19,18 @@
           frameborder="0" style="border:0"
           src="https://www.google.com/maps/embed/v1/place?{{url_params}}" allowfullscreen>
         </iframe>
-        <h2>Location: {{event.location}}</h2>
-        <h3>Start: {{event.start_date.strftime("%B %d, %Y at %I:%M %p")}}</h3>
-        <h3>End: {{event.end_date.strftime("%B %d, %Y at %I:%M %p")}}</h3>
-        {% if event.description %}
-            <p>{{event.description}}</p>
-        {% endif %}
-        {% if current_apt%}
-            <h4>You have an appointment at current_apt.start_date.strftime("%I:%M %p")</h4>
-            <form action="{{ url_for('scheduleapt') }}'" method="POST" id="userform">
+        <div class="event-info" style="border-bottom: 1px solid rgb(238, 238, 238);">
+            <h2>Location: {{event.location}}</h2>
+            <h3>Start: {{event.start_date.strftime("%B %d, %Y at %I:%M %p")}}</h3>
+            <h3>End: {{event.end_date.strftime("%B %d, %Y at %I:%M %p")}}</h3>
+            {% if event.description %}
+                <p>{{event.description}}</p>
+            {% endif %}
+        </div>
+        <div class="apointment-info">
+            {% if current_apt%}
+            <h4>You have an appointment at {{current_apt.start_time.strftime("%I:%M %p")}}</h4>
+            <form action="{{ url_for('scheduleapt') }}" method="POST" id="userform">
                 <input type="hidden" name="tsid" value="{{ current_apt.key.id() }}"/>
                 <input type="hidden" name="eid" value="{{ event.key.id() }}"/>
                 <button type="submit" class="btn btn-danger">Cancel Appointment</button>
@@ -47,6 +50,7 @@
             </form>
             <a href="{{url_for('editevent', eid=event.key.id())}}" class="btn btn-primary btn-larg">Edit Event</a>
         {% endif %}
+        </div>
     {% else %}
         <p>Sorry, we are unable to find the requested event. Please try again.</p>
     {% endif %}
