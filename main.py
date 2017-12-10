@@ -450,6 +450,21 @@ def scheduleapt():
             flash("Unable to find specified timeslot", Alert.danger)
     return redirect(url_for("viewevent", eid=event_id))
 
+@app.route("/events/notes", methods=['POST'])
+def updateaptnote():
+    event_id = None
+    if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user() \
+            and request.values.has_key('note'):
+        user_id = users.get_current_user().user_id()
+        event_id = request.values['eid']
+        apt_id = request.values['tsid']
+        time_slot = events.get_time_slot(apt_id, event_id)
+        if time_slot and time_slot.user_id == user_id:
+            time_slot.notes = request.values['note']
+            flash("Updated notes", Alert.success)
+            time_slot.put()
+    return redirect(url_for("viewevent", eid=event_id))
+
 
 #### END EVENTS ####
 

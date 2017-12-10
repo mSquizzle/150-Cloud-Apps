@@ -22,7 +22,7 @@ class TimeSlot(ndb.Model):
     can_be_scheduled = ndb.BooleanProperty(default=True)
     event = ndb.KeyProperty(kind=Event, required=True)
     location = ndb.StringProperty()
-    notes = ndb.StringProperty()
+    notes = ndb.TextProperty()
     scheduled_for_deletion = ndb.BooleanProperty(default=False)
 
 # need utilities for this
@@ -36,7 +36,8 @@ def list_events(limit=10):
 def list_open_slots(event):
     if event:
         q = TimeSlot.query().filter(TimeSlot.event == event.key)\
-            .filter(TimeSlot.can_be_scheduled == True)\
+            .filter(TimeSlot.can_be_scheduled == True) \
+            .filter(TimeSlot.user_id == None) \
             .filter(TimeSlot.scheduled_for_deletion == False)\
             .filter(TimeSlot.start_time > datetime.datetime.now())
         return q.fetch()

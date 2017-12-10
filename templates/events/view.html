@@ -30,6 +30,14 @@
         <div class="apointment-info">
             {% if current_apt%}
             <h4>You have an appointment at {{current_apt.start_time.strftime("%I:%M %p")}}</h4>
+            <form action="{{ url_for('updateaptnote') }}" method="POST" id="note-form">
+                <input type="hidden" name="tsid" value="{{ current_apt.key.id() }}"/>
+                <input type="hidden" name="eid" value="{{ event.key.id() }}"/>
+                 <label for="note">Notes</label>
+                <textarea form="note-form" class="form-control" id="note" name="note" aria-describedby="notesHelp" maxlength="400">{{ current_apt.notes if current_apt.notes else '' }}</textarea>
+                <small id="notesHelp" class="form-text text-muted" >Have any allergies? Afraid of needles? Add a small here so we can try to make your donation experience as easy as possible.<br/></small>
+                <button type="submit" class="btn btn-info">Update Notes</button>
+            </form>
             <form action="{{ url_for('scheduleapt') }}" method="POST" id="userform">
                 <input type="hidden" name="tsid" value="{{ current_apt.key.id() }}"/>
                 <input type="hidden" name="eid" value="{{ event.key.id() }}"/>
