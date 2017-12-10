@@ -1,20 +1,23 @@
+import os, re, datetime, urllib, requests, logging
+from functools import wraps, partial
+
+import requests
+from requests_toolbelt.adapters import appengine
+from google.appengine.api import users
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
-from werkzeug.security import generate_password_hash, check_password_hash
-from google.appengine.api import users
-#import MySQLdb
 import datetime
 import urllib
 from event import events, create, update
 
-import logging
-from forms import login, institution, donor
-import os, re
-from functools import wraps, partial
+from forms import login, institution, donor, radius, eligibility
+from event import events, create, update
 
 app = Flask (__name__)
 app.config.from_pyfile('./config.py')
 
+appengine.monkeypatch()
 
 class Alert:
     """
@@ -149,6 +152,10 @@ hospital_required = partial(_required, arg="hospital")
 @app.errorhandler(401)
 def unauthorized(e):
     return render_template('401.html'), 401
+
+@app.errorhandler(404)
+def unauthorized(e):
+    return render_template('404.html'), 404
 
 ################################################################################
 #                                  Routing                                     #
@@ -287,6 +294,12 @@ def dashboard():
             'dashboard.html',
             record=cursor.fetchone()
         )
+@app.route('/eligibility')
+@donor_required
+def eligibility_questionaire():
+    form = eligibility.Form()
+    return render_template('eligibility.html', form=form)
+
             
 
 #### BEGIN EVENTS ####
@@ -439,7 +452,6 @@ def scheduleapt():
 
 
 #### END EVENTS ####
-    return render_template("events/view.html", event=event, time_slots=time_slots)
 
 
 @app.route('/find_donors', methods=['GET', 'POST'])
