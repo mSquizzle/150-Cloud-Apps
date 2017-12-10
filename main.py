@@ -1,6 +1,5 @@
 import os, re, datetime, urllib, requests, logging
 from functools import wraps, partial
-
 import requests
 from requests_toolbelt.adapters import appengine
 from google.appengine.api import users
@@ -8,9 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 import datetime
-import pytz
 import urllib
-from event import events, create, update
 
 from forms import login, institution, donor, radius, eligibility
 from event import events, create, update
@@ -351,7 +348,7 @@ def createevent():
     else:
         if form.errors:
             report_errors(form.errors)
-        return render_template("events/create.html", form=form)
+        return render_template("events/create.html", form=form, api_key=get_maps_key())
 
 @app.route('/events/edit', methods=['GET'])
 def editevent():
