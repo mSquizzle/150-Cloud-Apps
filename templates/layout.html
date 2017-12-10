@@ -21,11 +21,15 @@
 
       <ul class="nav navbar-nav navbar-right">
           {% if g.authenticated %}
-              <li><a href="{{ url_for('settings') }}">Settings</a></li>
               {% if g.get('account_type') == 'donor' %}
+                <li><a href="{{ url_for('settings') }}">Settings</a></li>
                 <li><a href="{{ url_for('eligibility_questionaire') }}">Update Eligibility</a></li>
               {% elif g.get('account_type') == 'bank' %}
+                <li><a href="{{ url_for('emailadmin') }}">Email Admin</a></li>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
                 <li><a href="{{ url_for('createevent') }}">Create Event</a></li>
+              {% elif g.get('account_type') == 'hospital' %}
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
               {% endif %}
               <li><a href="{{ g.logout }}">Logout</a></li>
           {% else %}
