@@ -609,13 +609,16 @@ def viewevent():
                 }
                 apt_url = urllib.urlencode(params)
                 apt_time=events.get_as_eastern(current_apt.start_time)
+            format = "%I:%M %p"
+            if start_date + datetime.timedelta(days=1) < end_date:
+                format = "%B %d, %Y at %I:%M %p"
             slots = events.list_open_slots(event)
             time_slots = []
             for slot in slots:
                 date = events.get_as_eastern(slot.start_time)
                 time_slots.append({
                     'id' : slot.key.id(),
-                    'date' : date.strftime("%I:%M %p")
+                    'date' : date.strftime(format)
                 })
     return render_template("events/view.html",
                            event=event,
