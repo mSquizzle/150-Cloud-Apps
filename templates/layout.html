@@ -21,11 +21,11 @@
 
       <ul class="nav navbar-nav navbar-right">
           {% if g.authenticated %}
-          <li><a href="{{ url_for('settings') }}">Settings</a></li>
-          {% if g.get('account_type') == 'bank' %}
-          <li><a href="{{ url_for('manageevent') }}"><span class="glyphicon glyphicon-calendar"></span> Manage Events</a></li>
-          {% endif %}
-          <li><a href="{{ g.logout }}">Logout</a></li>
+              <li><a href="{{ url_for('settings') }}"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
+              {% if g.get('account_type') == 'bank' %}
+              <li><a href="{{ url_for('manageevent') }}"><span class="glyphicon glyphicon-calendar"></span> Manage Events</a></li>
+              {% endif %}
+              <li><a href="{{ g.logout }}">Logout</a></li>
           {% else %}
           <li><a href="{{ url_for('choose_account') }}">Create Account</a></li>
           <li class="dropdown">

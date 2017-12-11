@@ -43,6 +43,10 @@ def list_configured_events(limit=10, offset=0):
         .filter(Event.scheduled_for_deletion == False)
     return q.fetch(limit, offset=offset)
 
+def count_configured_events():
+    q = Event.query().order(-Event.end_date) \
+        .filter(Event.scheduled_for_deletion == False)
+    return q.count()
 
 def list_open_slots(event):
     if event:

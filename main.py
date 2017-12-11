@@ -420,7 +420,11 @@ def publishevent():
 
 @app.route('/events/manage')
 def manageevent():
-    upcoming_events = events.list_configured_events(10)
+    offset = 0
+    if(request.values.has_key('offset')):
+        offset = int(request.values['offset'])
+    upcoming_events = events.list_configured_events(10, offset=offset)
+    total_events = events.count_configured_events()
     event_list = []
     for event in upcoming_events:
         date = events.get_as_eastern(event.start_date)
@@ -433,7 +437,8 @@ def manageevent():
             'key': event.key,
             'is_over':event.end_date < get_current_time()
         })
-    return render_template('events/manage.html', event_list=event_list, current_time=get_current_time())
+    more_events = False
+    return render_template('events/manage.html', event_list=event_list, current_time=get_current_time(), more_events=False)
 
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
