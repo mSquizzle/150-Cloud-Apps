@@ -367,7 +367,7 @@ def eligibility_questionaire():
 @app.route('/events/create', methods=['GET', 'POST'])
 def createevent():
     #todo - need to be able to extract from the session - not sticking right now
-    form = create.Form(inst_id="this_is_a_test")
+    form = create.Form(inst_id=str(g.account_id))
     if form.validate_on_submit():
         logging.info(form.start_date.data)
         # form takes data in utc, we're using eastern times
@@ -480,11 +480,13 @@ def publishevent():
     return redirect(url_for('viewevent', eid=eid))
 
 @app.route('/events/manage')
+@login_required
+@bank_required
 def manageevent():
     offset = 0
     if(request.values.has_key('offset')):
         offset = int(request.values['offset'])
-    upcoming_events = events.list_configured_events(10, offset=offset)
+    upcoming_events = events.list_configured_events(id=str(g.account_id), limit=10, offset=offset)
     total_events = events.count_configured_events()
     event_list = []
     for event in upcoming_events:

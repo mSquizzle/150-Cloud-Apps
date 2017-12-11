@@ -72,6 +72,9 @@
                             </form>
                     {% endif %}
                 {% elif g.get('account_type') == 'bank' %}
+                    {% if not event.published %}
+                        <h4>This event is not yet public. Users will not be able to sign up for it.</h4>
+                    {% endif%}
                     {% if event.end_date > current_time and g.get('account_type') == 'bank' %}
                         <a href="{{url_for('editevent', eid=event.key.id())}}" class="btn btn-primary btn-larg">Edit Event</a>
                     {% endif %}
