@@ -8,17 +8,17 @@ INSERT INTO donor (first_name, last_name, phone, email, blood_type, zipcode, las
   VALUES('sonal', 'c', '9786174567', 'abcd@gmail.com', 'O+', '02155', '2017-12-30');
   
   INSERT INTO donor (first_name, last_name, phone, email, zipcode) 
-  VALUES ('Cardinal', 'Rose', '1239874567', 'hello@world.com', '12345');
+  VALUES ('Cardinal', 'Rose', '1239874567', 'hello@world.com', '02143');
 
 
   INSERT INTO donor (first_name, last_name, phone, email, zipcode) 
-  VALUES ('Jon', 'Snow', '1239874567', 'jsnow@thewall.com', '11111');
+  VALUES ('Jon', 'Snow', '1239874567', 'jsnow@thewall.com', '01742');
 
   INSERT INTO donor (first_name, last_name, phone, email, zipcode, blood_type) 
-  VALUES ('Jaqen', 'H’ghar', '1239193567', 'jhghar@faceless.com', '11511', 'B+');
+  VALUES ('Jaqen', 'H’ghar', '1239193567', 'jhghar@faceless.com', '90064', 'B+');
 
   INSERT INTO donor (first_name, last_name, phone, email, zipcode) 
-  VALUES ('Sirius', 'Black', '6739874567', 'sblack@padfoot.com', '49372');
+  VALUES ('Sirius', 'Black', '6739874567', 'sblack@padfoot.com', '02153');
 
 
 # Banks

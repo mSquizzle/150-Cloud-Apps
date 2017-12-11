@@ -308,13 +308,18 @@ def settings():
 @bank_required
 def emailadmin():
     form = email.Form()
-   # sender_address = email address associated with login
-    success = False
     if form.validate_on_submit():
+	# get email associated with current logged in account 
+        cursor = get_db().cursor()
+        cursor.execute(
+		"SELECT email FROM bank WHERE id=%s", (g.account_id,)
+            )
+        email_sender = cursor.fetchone()[0]	
+
+	#Get all users in specified radius 
 	url = "https://www.zipcodeapi.com/rest/{key}/radius.json/{zipcode}/{distance}/miles?minimal".format(key=get_zipcode_key(), \
 	   zipcode='{:05d}'.format(form.zipcode.data),\
 	   distance='{:03d}'.format(form.radius.data))
-	
 	response = requests.get(url)
   	decoded = json.loads(response.text)
 	zipcode_string = str(decoded)
@@ -328,37 +333,25 @@ def emailadmin():
 		 IN({zipcodes})".format(zipcodes=formatted_zipcode) 
             )
 	results = cursor.fetchall()
-	#change to list and not json 
+        logging.info(list(results))
 	jsonresults = json.dumps(results)
-#       got all the emails from the db
+	#return jsonresul
+	#Set up email body
         email_body = form.body.data
         body = "<html><head></head><body><pre>{}</pre></body></html>".format(email_body)
-         # based off of book's user pref's code
-        #for loop here going through all emails in list
-    
         body = Template(body)
-        mail.send_mail(sender="sonalchatter91@gmail.com", \
-                to="sonal.chatter@tufts.edu",\
-                subject=form.subject.data,\
-                body=form.body.data,\
-                html=body)
-        success_message = "message sent!"
-        success = True
-    elif success == False:
-        success_message = "The email specified is not in our system. Please try again."
- #   except :
-  #      success_message = "There was an error sending your email. Please try again at another time."
-#                pass
-#        self.response.headers['Content-Type'] = 'application/json'
- #       obj = {
-  #          'success': success,
-   #         'message': success_message
-    #    }
-      #  self.response.out.write(json.dumps(obj))
- 
-        return render_template('emailadmin.html', user=users.get_current_user(), \
-				form=form)
-
+        #for loop here going through all emails in list
+	for recipient in results:   
+            recipient = recipient[0]
+	    try: 
+                mail.send_mail(sender=email_sender, \
+                    to=recipient,\
+                    subject=form.subject.data,\
+                    body=form.body.data,\
+                    html=body)
+                flash("Message Sent!", Alert.success)
+            except:
+	        flash("The email failed", Alert.warning)
     elif form.errors:
          report_errors(form.errors)
          return render_template('emailadmin.html', user=users.get_current_user(), \
