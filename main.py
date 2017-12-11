@@ -2,6 +2,7 @@ import os, re, datetime, urllib, requests, logging
 from functools import wraps, partial
 
 import requests
+from google.appengine.api import mail
 from requests_toolbelt.adapters import appengine
 from google.appengine.api import users
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,7 +11,6 @@ from flask import Flask, render_template, request, url_for, flash, \
 import datetime
 import urllib
 import json
-import webapp2
 from event import events, create, update
 from string import Template
 from forms import login, institution, donor, radius, eligibility, email
@@ -278,16 +278,71 @@ def settings():
     return render_template('settings.html')
 
 
-@app.route('/emailadmin')
+@app.route('/emailadmin', methods=['GET', 'POST'])
 @bank_required
-@login_required
 def emailadmin():
     form = email.Form()
-
+   # sender_address = email address associated with login
+    success = False
+    if form.validate_on_submit():
+	url = "https://www.zipcodeapi.com/rest/{key}/radius.json/{zipcode}/{distance}/miles?minimal".format(key=get_zipcode_key(), \
+	   zipcode='{:05d}'.format(form.zipcode.data),\
+	   distance='{:03d}'.format(form.radius.data))
+	
+	response = requests.get(url)
+  	decoded = json.loads(response.text)
+	zipcode_string = str(decoded)
+	formatted_zipcode = zipcode_string.replace("u'",'').replace("'",'')\
+	    .replace('[','').replace(']','').replace('{','').replace('}','')\
+	    .replace('zip_codes:', '')
+        cursor = get_db().cursor()
+        cursor.execute(
+                "SELECT  email\
+		 FROM donor WHERE zipcode \
+		 IN({zipcodes})".format(zipcodes=formatted_zipcode) 
+            )
+	results = cursor.fetchall()
+	#change to list and not json 
+	jsonresults = json.dumps(results)
+#       got all the emails from the db
+        email_body = form.body.data
+        body = "<html><head></head><body><pre>{}</pre></body></html>".format(email_body)
+         # based off of book's user pref's code
+        #for loop here going through all emails in list
     
-    return render_template('emailadmin.html', user=users.get_current_user(), \
+        body = Template(body)
+        mail.send_mail(sender="sonalchatter91@gmail.com", \
+                to="sonal.chatter@tufts.edu",\
+                subject=form.subject.data,\
+                body=form.body.data,\
+                html=body)
+        success_message = "message sent!"
+        success = True
+    elif success == False:
+        success_message = "The email specified is not in our system. Please try again."
+ #   except :
+  #      success_message = "There was an error sending your email. Please try again at another time."
+#                pass
+#        self.response.headers['Content-Type'] = 'application/json'
+ #       obj = {
+  #          'success': success,
+   #         'message': success_message
+    #    }
+      #  self.response.out.write(json.dumps(obj))
+ 
+        return render_template('emailadmin.html', user=users.get_current_user(), \
 				form=form)
 
+    elif form.errors:
+         report_errors(form.errors)
+         return render_template('emailadmin.html', user=users.get_current_user(), \
+				form=form)
+
+
+  # Flask reuqires a return for every function 
+    return render_template('emailadmin.html', user=users.get_current_user(), \
+				form=form)
+      
 
 @app.route('/dashboard')
 @login_required
@@ -511,18 +566,21 @@ def find_donors():
 	    .replace('[','').replace(']','').replace('{','').replace('}','')\
 	    .replace('zip_codes:', '')
   #	return formatted_zipcode
-        with get_db().cursor() as cursor:
-            cursor.execute(
+        cursor = get_db().cursor()
+        cursor.execute(
                 "SELECT id, email, phone, zipcode,contact, outreach \
 		 FROM donor WHERE zipcode \
 		 IN({zipcodes})".format(zipcodes=formatted_zipcode) 
             )
 	results = cursor.fetchall()
+	jsonresults = json.dumps(results)
         flash("We found some donors", Alert.success)
-	return results
+	return jsonresults
    #     return redirect(url_for('find_donors'))
     elif form.errors:
         report_errors(form.errors)
   #  form.radius.data = request.args.get("inst")
+        return render_template(
+            'find_donors.html', form=form)
     return render_template(
         'find_donors.html', form=form)

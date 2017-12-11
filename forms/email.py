@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, RadioField, DateField, IntegerField, validators
+from wtforms import TextAreaField, StringField, RadioField, DateField, IntegerField, validators
 
 class Form(FlaskForm):
     zipcode = IntegerField('Zipcode', validators=[
@@ -12,4 +12,7 @@ class Form(FlaskForm):
     ])
     subject = StringField('Subject', validators=[                           
         validators.DataRequired('Subject field is required'),                 
+    ])                                                              
+    body = TextAreaField('Body', validators=[                           
+        validators.DataRequired('Email Body is required'),                 
     ])                                                              
