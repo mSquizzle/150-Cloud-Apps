@@ -45,6 +45,13 @@ def get_maps_key():
     key = os.environ.get('MAPS_KEY')
     return key
 
+def get_id():
+    id = app_identity.get_application_id()
+    if not id:
+        id = os.environ.get('PROJECT_ID')
+    logging.info(os.environ.get('PROJECT_ID'))
+    return id
+
 def get_current_time():
     return datetime.datetime.now()
 
@@ -557,7 +564,7 @@ def updateaptnote():
 def notifiyevent():
     logging.info("running the event notification hander")
     events_to_notify = events.get_events_to_notify()
-    sender_address= app_identity.get_application_id()+'@appspot.gserviceaccount.com'
+    sender_address= 'admin@%s.appspotmail.com' % get_id()
     for event in events_to_notify:
         time_slots = events.TimeSlot.query(ancestor=event.key)
         logging.info(event.location)
@@ -596,7 +603,7 @@ def notifiyevent():
 def deleteevents():
     logging.info("running the delete event handler")
     events_to_delete = events.Event.query().filter(events.Event.scheduled_for_deletion == True).fetch(10)
-    sender_address =  app_identity.get_application_id()+'@appspot.gserviceaccount.com>'
+    sender_address= 'admin@%s.appspotmail.com' % get_id()
     for event in events_to_delete:
         time_slots = events.TimeSlot.query(ancestor=event.key)
         slot_keys = []
