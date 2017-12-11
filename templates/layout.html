@@ -27,7 +27,7 @@
               {% elif g.get('account_type') == 'bank' %}
                 <li><a href="{{ url_for('emailadmin') }}">Email Admin</a></li>
                 <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for(''manageevent') }}"><span class="glyphicon glyphicon-calendar"></span> Manage Events</a></li>
+                <li><a href="{{ url_for('manageevent') }}"><span class="glyphicon glyphicon-calendar"></span> Manage Events</a></li>
               {% elif g.get('account_type') == 'hospital' %}
                 <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
               {% endif %}
