@@ -23,12 +23,9 @@
     </div>                                                                         
       
     <div class="form-group">
-        <form action="/sendemail" id="usrform" method="post">
-            Body:
-            <textarea rows="4" cols="50" name="email_body" form="usrform" required class="form-control">
-                Enter text here...
-            </textarea>
-        </form><br/>
+        {{form.body.label}}:
+	{{form.body(class="form-control", placeholder="Enter text here...")}}    
+        {{form.body(rows='10',cols='100')}}
     </div>
 
     <input type="submit" class="btn btn-primary btn-large" value="Submit">         
