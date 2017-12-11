@@ -62,7 +62,11 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
   3. Once the key has been generated, go to API Key Manager, and click the manage button next to your new key.
   4. Follow their prompts to whitelist any IP and port combinations where you will be running this application.
   5. In app.yaml, set the MCE_KEY environment variable to your API key.
-- TODO: Zip code API key info goes here
+- In order to find all users within a specific radius of a given zipcode, you will need a working Zipcode Key.
+  1. Go to https://www.zipcodeapi.com/ and click the "Start Using the API" button
+  2. From there, click the button "Free Key" to register for a free key
+  3. Activate your registration following the prompts 
+  4. Follow the steps to register and then set the "ZIPCODE_API_KEY" variable in apps.yaml to your API key 
 
 ### Development Server
 Once the libraries, database, database proxy, and API keys are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
