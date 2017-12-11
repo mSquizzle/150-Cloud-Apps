@@ -71,3 +71,13 @@ indexes:
   properties:
   - name: event
   - name: start_time
+
+- kind: TimeSlot
+  ancestor: yes
+  properties:
+  - name: start_time
+
+- kind: TimeSlot
+  ancestor: yes
+  properties:
+  - name: start_time
