@@ -9,7 +9,7 @@ env_variables:
   CLOUDSQL_DATABASE: "mrs"
   PROJECT_ID: ""
   MAPS_KEY: ""
-
+  ZIPCODE_API_KEY: ""
 
 # [START handlers]
 handlers:

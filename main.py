@@ -10,8 +10,10 @@ import datetime
 import urllib
 from google.appengine.ext import ndb
 from google.appengine.api import app_identity, mail
-
-from forms import login, institution, donor, radius, eligibility
+import json
+import webapp2
+from string import Template
+from forms import login, institution, donor, radius, eligibility, email
 from event import events, create, update
 
 app = Flask (__name__)
@@ -44,6 +46,8 @@ def get_db():
 def get_maps_key():
     key = os.environ.get('MAPS_KEY')
     return key
+def get_zipcode_key():
+    return '7FhkHmuRBeyrwzqsdnBqZQEJTXVOekSakAs9zD226ePAcfxCT3TypBriarNbaYyW'
 
 def get_id():
     id = app_identity.get_application_id()
@@ -144,19 +148,21 @@ def login_required(func):
         return func(*args, **kwargs)
     return decorated_view
 
-def _required(func, arg):
+def _required(func, group):
     @wraps(func)
     def decorated_view(*args, **kwargs):
-        if not g.get("authenticated") or g.get("account_type") != arg:
+        if not g.get("authenticated") or g.get("account_type") not in group:
             abort(401)
         return func(*args, **kwargs)
     return decorated_view
 
-donor_required = partial(_required, arg="donor")
+donor_required = partial(_required, group=["donor"])
 
-bank_required = partial(_required, arg="bank")
+bank_required = partial(_required, group=["bank"])
 
-hospital_required = partial(_required, arg="hospital")
+hospital_required = partial(_required, group=["hospital"])
+
+institution_required = partial(_required, group=["hospital", "bank"])
 
 @app.errorhandler(401)
 def unauthorized(e):
@@ -236,7 +242,7 @@ def complete_individual():
             "INSERT INTO donor"
             "(first_name, last_name, phone, zipcode, email)"
             "VALUES (%s, %s, %s, %s, %s)",
-            (form.first_name.data, form.last_name.data, form.phone.data, form.zipcode.data, user.email())
+            (form.first_name.data, form.last_name.data, form.phone.data, "{:05d}".format(form.zipcode.data), user.email())
         )
         flash("Successfully created acount!", Alert.success)
         return redirect(url_for('index'))
@@ -269,8 +275,7 @@ def inst_login():
             return redirect(url_for('index'))
         else:
             flash('Invalid password', Alert.warning)
-    elif form.errors:
-        report_errors(form.errors)
+    report_errors(form.errors)
     return render_template(
         'accounts/login.html',
         form=form
@@ -294,29 +299,62 @@ def settings():
 
 
 @app.route('/emailadmin')
+@bank_required
+@login_required
 def emailadmin():
-    return render_template('emailadmin.html')
+    form = email.Form()
+
+    
+    return render_template('emailadmin.html', user=users.get_current_user(), \
+				form=form)
 
 
 @app.route('/dashboard')
-@login_required
+@institution_required
 def dashboard():
-    if g.account_type == 'donor':
-        return ''
-    else:
-        cursor = get_db().cursor()
-        cursor.execute(
-            "SELECT * FROM {} WHERE id=%s".format(g.account_type),
-            (g.account_id,)
-        )
-        return render_template(
-            'dashboard.html',
-            record=cursor.fetchone()
-        )
-@app.route('/eligibility')
+    cursor = get_db().cursor()
+    cursor.execute(
+        "SELECT O_neg, O_pos, A_neg, A_pos, B_neg, B_pos, AB_neg, AB_pos "
+        "FROM {} WHERE id=%s".format(g.account_type),
+        (g.account_id,)
+    )
+    return render_template(
+        'dashboard.html',
+        record=cursor.fetchone()
+    )
+
+
+@app.route('/eligibility', methods=["GET", "POST"])
 @donor_required
 def eligibility_questionaire():
     form = eligibility.Form()
+    if form.validate_on_submit():
+        status = "Eligible"
+        if form.age_min.data == "no":
+            flash("Check your local state guidelines, some states let you donate starting at 16. If you are 17, you may donate blood, but additional requirements apply; please check your state for guidelines", Alert.info)
+            status = "Ineligible"
+        if form.age_max.data == "no":
+            flash("Check your local state guidelines, some states require a doctor's note declaring you are in good health", Alert.info)
+            status = "Unknown" if status != "Ineligible" else "Ineligible"
+        if form.weight_min.data == "no":
+            flash("Unfortunately, you must weigh at least 110lbs to donate blood", Alert.info)
+            status = "Ineligible"
+        if form.medication.data == "yes":
+            flash("Bring list of all your medications with you to the donation location", Alert.info)
+            status = "Unknown" if status != "Ineligible" else "Ineligible"
+        if form.travel.data == "yes":
+            flash("Bring list of all your travels, including which countries you visited, and when", Alert.info)
+            status = "Unknown" if status != "Ineligible" else "Ineligible"
+        if form.infection.data == "yes":
+            flash("Individuals with an infection may not donate blood", Alert.info)
+            status = "Ineligible"
+        if form.recent_donation.data == "yes":
+            flash("Please wait until at least 56 days before donating blood again", Alert.info)
+            status = "Ineligible"
+        cursor = get_db().cursor()
+        cursor.execute("UPDATE donor SET eligibility=%s WHERE id=%s", (status, g.account_id))
+        return redirect(url_for('index'))
+    report_errors(form.errors)
     return render_template('eligibility.html', form=form)
             
 
@@ -636,17 +674,28 @@ def find_donors():
     """
     form = radius.Form()
     if form.validate_on_submit():
-	parameters = {"api_key": 'ZIPCODE_API_KEY',"format": "radius.json", \
-	     "zipcode": form.zipcode.data, "distance": form.radius.data, \
-	      "units": "miles?minimal" }
-	response = requests.get("https://www.zipcodeapi.com/rest", params=parameters)
-  #      if query comes back empty, then say there are no donors 
-  #      with get_db().cursor() as cursor:
-  #          cursor.execute(
-  #              "SELECT zipcode FROM donor WHERE zipcode IN(all the zipcodes returned from api call) 
-  #          )
+	url = "https://www.zipcodeapi.com/rest/{key}/radius.json/{zipcode}/{distance}/miles?minimal".format(key=get_zipcode_key(), \
+	   zipcode='{:05d}'.format(form.zipcode.data),\
+	   distance='{:03d}'.format(form.radius.data))
+	
+	response = requests.get(url)
+  	decoded = json.loads(response.text)
+  #      import pdb; pdb.set_trace()
+	zipcode_string = str(decoded)
+	formatted_zipcode = zipcode_string.replace("u'",'').replace("'",'')\
+	    .replace('[','').replace(']','').replace('{','').replace('}','')\
+	    .replace('zip_codes:', '')
+  #	return formatted_zipcode
+        with get_db().cursor() as cursor:
+            cursor.execute(
+                "SELECT id, email, phone, zipcode,contact, outreach \
+		 FROM donor WHERE zipcode \
+		 IN({zipcodes})".format(zipcodes=formatted_zipcode) 
+            )
+	results = cursor.fetchall()
         flash("We found some donors", Alert.success)
-        return redirect(url_for('find_donors'))
+	return results
+   #     return redirect(url_for('find_donors'))
     elif form.errors:
         report_errors(form.errors)
   #  form.radius.data = request.args.get("inst")

@@ -1,25 +1,40 @@
 {% extends "layout.html" %}
 {% block body %}
     <div class="page-header">
-            <h1>Test and Send Emails</h1>
+            <h1>Send Emails to donors</h1>
     </div>
-    {% if user %}
+
+<form method="post" action="{{ url_for('emailadmin') }}">
+{{ form.csrf_token }}                                                         
+                                                                                   
+    <div class="form-group">                                                       
+        {{ form.zipcode.label }}:                                                  
+        {{ form.zipcode(class="form-control", placeholder="12345") }}              
+    </div>                                                                         
+                                                                                   
+    <div class="form-group">                                                       
+        {{ form.radius.label }}:                                                   
+        {{ form.radius(class="form-control", placeholder="ex:50 miles") }}         
+    </div>                                                                         
+                                                                                   
+    <div class="form-group">                                                       
+        {{ form.subject.label }}:                                                  
+        {{ form.subject(class="form-control", placeholder="Upcoming Event") }}              
+    </div>                                                                         
+      
     <div class="form-group">
         <form action="/sendemail" id="usrform" method="post">
-            Send Address:
-            <input type="email" name="send_address" required class="form-control">
-            Subject:
-            <input type="text" name="email_subject" required class="form-control">
             Body:
             <textarea rows="4" cols="50" name="email_body" form="usrform" required class="form-control">
                 Enter text here...
             </textarea>
-            <input type="submit" class="btn">
         </form><br/>
     </div>
-   {% else %}
+
+    <input type="submit" class="btn btn-primary btn-large" value="Submit">         
+</form>                                                                            
+                       
     <h1> You must be logged in to view this page.</h1>
-    {% endif %}
 {% endblock %}
 {% block footer %}
     <script src="https://cloud.tinymce.com/stable/tinymce.min.js?apiKey=oi1h5eercka6ep3282vhbmznnqdjusxha5gziqz2weuwxvah"></script>
