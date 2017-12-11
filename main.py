@@ -430,8 +430,9 @@ def eligibility_questionaire():
 
 #### BEGIN EVENTS ####
 @app.route('/events/create', methods=['GET', 'POST'])
+@login_required
+@bank_required
 def createevent():
-    #todo - need to be able to extract from the session - not sticking right now
     form = create.Form(inst_id=str(g.account_id))
     if form.validate_on_submit():
         logging.info(form.start_date.data)
@@ -439,12 +440,13 @@ def createevent():
         # todo - enable timezone based on user preferences
         start_date = form.start_date.data + datetime.timedelta(hours=5)
         end_date = form.end_date.data + datetime.timedelta(hours=5)
+        apt_slot=int(form.apt_length.data)
         new_event = events.Event(
             inst_id = form.inst_id.data,
             location = form.location.data,
             description = form.description.data,
             num_parallel=1,
-            apt_slot=15,
+            apt_slot=apt_slot,
             published=False,
             start_date= start_date,
             end_date = end_date,
@@ -461,7 +463,7 @@ def createevent():
                 scheduled_for_deletion=False
             )
             time_slot.put()
-            current_date = current_date + datetime.timedelta(minutes=15)
+            current_date = current_date + datetime.timedelta(minutes=apt_slot)
         return redirect(url_for('viewevent', eid=new_event.key.id()))
     else:
         if form.errors:
@@ -754,7 +756,7 @@ def download():
     def generate(event):
         yield ','.join(header)+'\n'
         if event:
-            time_slots = events.TimeSlot.query(ancestor=event.key)
+            time_slots = events.TimeSlot.query(ancestor=event.key).order(events.TimeSlot.start_time)
             for slot in time_slots:
                 id_string = ""
                 if slot.user_id:

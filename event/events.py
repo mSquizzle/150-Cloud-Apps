@@ -57,7 +57,8 @@ def list_open_slots(event):
             .filter(TimeSlot.can_be_scheduled == True) \
             .filter(TimeSlot.user_id == None) \
             .filter(TimeSlot.scheduled_for_deletion == False)\
-            .filter(TimeSlot.start_time > datetime.datetime.now())
+            .filter(TimeSlot.start_time > datetime.datetime.now())\
+            .order(TimeSlot.start_time)
         return q.fetch()
     return None
 
