@@ -24,7 +24,19 @@
             </a>
         {% endfor %}
         </div>
-        {% else %}
+    {% else %}
         <p>You haven't configured any events. Get started today!</p>
+    {% endif %}
+    {% if more_events or fewer_events %}
+        <nav>
+          <ul class="pagination justify-content-center">
+          {% if fewer_events %}
+              <li class="page-item"><a class="page-link" href="{{url_for('manageevent', offset=offset-10)}}">Previous</a></li>
+          {% endif %}
+          {% if more_events %}
+              <li class="page-item"><a class="page-link" href="{{url_for('manageevent', offset=offset+10)}}">Next</a></li>
+          {% endif %}
+          </ul>
+        </nav>
     {% endif %}
 {% endblock %}
