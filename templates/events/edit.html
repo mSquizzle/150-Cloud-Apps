@@ -4,6 +4,9 @@
     <h1>Update Event Details</h1>
 </div>
     {% if event %}
+        {% if not event.published %}
+            <h4>This event is not yet public. It will not appear in listings, nor will users be able to schedule appointments.</h4>
+        {% endif %}
        <form action="{{ url_for('updateevent') }}" method="POST" >
             {{ form.csrf_token }}
             <div class="form-group">
@@ -27,10 +30,9 @@
             <input type="submit" class="btn btn-danger btn-large  pull-right" value="Cancel Event">
         </form>
         {% if not event.published %}
-            <h4>This event is not yet public. It will not appear in listings, nor will users be able to schedule appointments.</h4>
             <form action="{{url_for('publishevent')}}" method="POST">
                 <input type="hidden" value="{{ event.key.id() }}" name="eid"/>
-                 <input type="submit" class="btn btn-danger btn-large  pull-right" value="Make Public">
+                 <input type="submit" class="btn btn-info btn-large" value="Make Public">
             </form>
         {% else %}
             <h4>This event is public.</h4>

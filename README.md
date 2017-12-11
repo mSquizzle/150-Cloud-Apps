@@ -26,30 +26,30 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
 ```
 
 ### Database Proxy
-- [Basic project setup](https://cloud.google.com/sql/docs/mysql/quickstart#before-you-begin)
-  1. Create Google App Engine Project
-  1. Enable billing
-  1. Enable Cloud SQL API
-- [Set up a Cloud SQL MySQL database](https://cloud.google.com/sql/docs/mysql/quickstart#create_a_title_short_instance)
-  1. Create second generation Cloud SQL instance within the same GAE project
-  1. Set a `root` password for the instance
-- [Authorize your client machine](https://cloud.google.com/sql/docs/mysql/sql-proxy#gcloud)
-  1. Go through the `gcloud init` proces if you haven't already and choose your project
-  1. Authorize client machine with `gcloud auth-default login` in order to allow the proxy to use your credentials for authentication 
-  1. Go ahead and run `gcloud auth login` for good measure
-- Setup the [Cloud SQL proxy binary](https://cloud.google.com/sql/docs/mysql/sql-proxy)
-  1. Download the [binary](https://cloud.google.com/sql/docs/mysql/sql-proxy#install)
-  1. Make it executable with `chmod +x cloud_sql_proxy`
-  1. For long-term it makes sense to move the binary to a directory like `/usr/local/bin`
-- Set appropriate [environment variables](https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml#Python_app_yaml_Defining_environment_variables) in `app.yaml`
-  - `CLOUDSQL_PASSWORD` is the root password for your MySQL instance
-  - `CLOUDSQL_CONNECTION_NAME` is the Cloud SQL connection in the format `<PROJECT_ID>:<REGION>:<INSTANCE_ID>`
-  - `PROJECT_ID` is the project; should be the same as the first part of the `CLOUDSQL_CONNECTION_NAME`
-- Define the SQL tables once the proxy is running
-  - If you have a MySQL client installed run `sql/setup.sh` to connect to the proxy, and create the database and tables 
-  - Otherwise, log into the Cloud SQL console and run the `sql/mrs.sql` commands manualy
-  
-For the last step, you need to be running the Cloud SQL proxy. This can be done by running: `cloud_sql_proxy -instances=<PROJECT_ID>:<REGION>:<INSTANCE_ID>=tcp:3306` (although the `cloud_sql_proxy` program may have to be invoked differently depending on how you installed it)
+1. [Basic project setup](https://cloud.google.com/sql/docs/mysql/quickstart#before-you-begin)
+  * Create Google App Engine Project
+  * Enable billing
+  * Enable Cloud SQL API
+2. [Set up a Cloud SQL MySQL database](https://cloud.google.com/sql/docs/mysql/quickstart#create_a_title_short_instance)
+  * Create second generation Cloud SQL instance within the same GAE project
+  * Set a `root` password for the instance
+3. [Authorize your client machine](https://cloud.google.com/sql/docs/mysql/sql-proxy#gcloud)
+  * Go through the `gcloud init` proces if you haven't already and choose your project
+  * Authorize client machine with `gcloud auth-default login` in order to allow the proxy to use your credentials for authentication 
+  * Go ahead and run `gcloud auth login` for good measure
+4. Setup the [Cloud SQL proxy binary](https://cloud.google.com/sql/docs/mysql/sql-proxy)
+  * Download the [binary](https://cloud.google.com/sql/docs/mysql/sql-proxy#install)
+  * Make it executable with `chmod +x cloud_sql_proxy`
+  * For long-term it makes sense to move the binary to a directory like `/usr/local/bin`
+5. Start the proxy
+  * Run `cloud_sql_proxy -instances=<PROJECT_ID>:<REGION>:<INSTANCE_ID>=tcp:3306` to start the proxy. The `cloud_sql_proxy` program may have to be invoked differently depending on where it was installed
+6. Create the database and tables
+  * If you have a MySQL client installed run `sql/setup.sh` to connect to the proxy, and create the database and tables 
+  * Otherwise, log into the Cloud SQL console and run the `sql/mrs.sql` commands manualy
+7. Set appropriate [environment variables](https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml#Python_app_yaml_Defining_environment_variables) in `app.yaml`
+  * `CLOUDSQL_PASSWORD` is the root password for your MySQL instance
+  * `CLOUDSQL_CONNECTION_NAME` is the Cloud SQL connection in the format `<PROJECT_ID>:<REGION>:<INSTANCE_ID>`
+  * `PROJECT_ID` is the project; should be the same as the first part of the `CLOUDSQL_CONNECTION_NAME`
 
 ### API Keys
 - In order to the Map embed and the Autocomplete box to work for events, you will need to have a valid Google Maps Key.

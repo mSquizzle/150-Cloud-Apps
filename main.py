@@ -14,7 +14,7 @@ from google.appengine.api import app_identity, mail
 import json
 from event import events, create, update
 from string import Template
-from forms import login, institution, donor, radius, eligibility, email
+from forms import login, institution, donor, radius, eligibility, email, settings
 from event import events, create, update
 
 app = Flask (__name__)
@@ -299,9 +299,23 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
+@app.route('/settings', methods=["GET", "POST"])
+@donor_required
+def update_settings():
+    form = settings.Form()
+    cursor = get_db().cursor()
+    if form.validate_on_submit():
+        cursor.execute(
+            "UPDATE donor SET contact=%s, outreach=%s WHERE id=%s",
+            (form.contact.data, form.outreach.data, g.account_id)
+        )
+        flash("Donor settings updated", Alert.success)
+    report_errors(form.errors)
+    cursor.execute("SELECT contact, outreach FROM donor WHERE id=%s", (g.account_id,))
+    row = cursor.fetchone()
+    form.contact.data = row[0]
+    form.outreach.data = row[1]
+    return render_template('settings.html', form=form)
 
 
 @app.route('/emailadmin', methods=['GET', 'POST'])
@@ -418,7 +432,7 @@ def eligibility_questionaire():
 @app.route('/events/create', methods=['GET', 'POST'])
 def createevent():
     #todo - need to be able to extract from the session - not sticking right now
-    form = create.Form(inst_id="this_is_a_test")
+    form = create.Form(inst_id=str(g.account_id))
     if form.validate_on_submit():
         logging.info(form.start_date.data)
         # form takes data in utc, we're using eastern times
@@ -531,12 +545,16 @@ def publishevent():
     return redirect(url_for('viewevent', eid=eid))
 
 @app.route('/events/manage')
+@login_required
+@bank_required
 def manageevent():
     offset = 0
     if(request.values.has_key('offset')):
         offset = int(request.values['offset'])
-    upcoming_events = events.list_configured_events(10, offset=offset)
-    total_events = events.count_configured_events()
+    fewer_events = offset >= 10
+    upcoming_events = events.list_configured_events(id=str(g.account_id), limit=10, offset=offset)
+    total_events = events.count_configured_events(id=str(g.account_id))
+    more_events = offset + 10 < total_events
     event_list = []
     for event in upcoming_events:
         date = events.get_as_eastern(event.start_date)
@@ -549,8 +567,7 @@ def manageevent():
             'key': event.key,
             'is_over':event.end_date < get_current_time()
         })
-    more_events = False
-    return render_template('events/manage.html', event_list=event_list, current_time=get_current_time(), more_events=False)
+    return render_template('events/manage.html', event_list=event_list, current_time=get_current_time(), more_events=more_events, fewer_events=fewer_events, offset=offset)
 
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():

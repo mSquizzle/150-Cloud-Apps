@@ -39,14 +39,16 @@ def list_events(limit=10):
         .filter(Event.published==True)
     return q.fetch(limit)
 
-def list_configured_events(limit=10, offset=0):
+def list_configured_events(id,limit=10, offset=0):
     q = Event.query().order(-Event.end_date)\
-        .filter(Event.scheduled_for_deletion == False)
+        .filter(Event.scheduled_for_deletion == False)\
+        .filter(Event.inst_id == str(id))
     return q.fetch(limit, offset=offset)
 
-def count_configured_events():
+def count_configured_events(id):
     q = Event.query().order(-Event.end_date) \
-        .filter(Event.scheduled_for_deletion == False)
+        .filter(Event.scheduled_for_deletion == False)\
+        .filter(Event.inst_id == str(id))
     return q.count()
 
 def list_open_slots(event):

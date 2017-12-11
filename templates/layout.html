@@ -22,7 +22,7 @@
       <ul class="nav navbar-nav navbar-right">
           {% if g.authenticated %}
               {% if g.get('account_type') == 'donor' %}
-                <li><a href="{{ url_for('settings') }}"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
+                <li><a href="{{ url_for('update_settings') }}"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
                 <li><a href="{{ url_for('eligibility_questionaire') }}">Update Eligibility</a></li>
               {% elif g.get('account_type') == 'bank' %}
                 <li><a href="{{ url_for('emailadmin') }}">Email Admin</a></li>

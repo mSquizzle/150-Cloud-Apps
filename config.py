@@ -15,7 +15,7 @@ DEBUG = not PRODUCTION
 
 if PRODUCTION:
     def CONNECT():
-        import MySQLdb
+        import MySQLdb, os
         conn = MySQLdb.connect(
             user=os.environ.get('CLOUDSQL_USER'),
             passwd=os.environ.get('CLOUDSQL_PASSWORD'),
