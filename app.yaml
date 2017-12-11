@@ -10,6 +10,7 @@ env_variables:
   PROJECT_ID: ""
   MAPS_KEY: ""
   ZIPCODE_API_KEY: ""
+  MCE_KEY = ""
 
 # [START handlers]
 handlers:

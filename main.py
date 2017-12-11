@@ -46,6 +46,11 @@ def get_db():
 def get_maps_key():
     key = os.environ.get('MAPS_KEY')
     return key
+
+def get_mce_key():
+    key = os.environ.get('MCE_KEY')
+    return key
+
 def get_zipcode_key():
     return '7FhkHmuRBeyrwzqsdnBqZQEJTXVOekSakAs9zD226ePAcfxCT3TypBriarNbaYyW'
 
@@ -306,7 +311,7 @@ def emailadmin():
 
     
     return render_template('emailadmin.html', user=users.get_current_user(), \
-				form=form)
+				form=form, mce_key=get_mce_key())
 
 
 @app.route('/dashboard')
