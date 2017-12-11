@@ -8,6 +8,7 @@ from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 import datetime
 import urllib
+from google.appengine.ext import ndb
 
 from forms import login, institution, donor, radius, eligibility
 from event import events, create, update
@@ -358,14 +359,17 @@ def editevent():
     form=None
     event_id = request.args['eid']
     if event_id:
-        event_long = long(event_id)
-        possible_event = events.Event.get_by_id(event_long)
-        event=possible_event
-        if possible_event:
-            if possible_event.end_date < get_current_time():
-                flash("This event is over. It cannot be edited.", Alert.danger)
-                return redirect(url_for("viewevent", eid=event_id))
-            form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
+        if g.account_type == 'bank':
+            event_long = long(event_id)
+            possible_event = events.Event.get_by_id(event_long)
+            event=possible_event
+            if possible_event:
+                if possible_event.end_date < get_current_time():
+                    flash("This event is over. It cannot be edited.", Alert.danger)
+                    return redirect(url_for("viewevent", eid=event_id))
+                form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
+        else:
+            abort(401)
     else:
         report_errors(form.errors)
     return render_template("events/edit.html", form=form, event=event)
@@ -403,6 +407,11 @@ def deleteevent():
         if possible_event:
             possible_event.scheduled_for_deletion = True
             possible_event.put()
+            time_slots = events.TimeSlot.query(ancestor = possible_event.key)
+            if time_slots:
+                for slot in time_slots:
+                    slot.scheduled_for_deletion = True
+                ndb.put_multi(time_slots)
             flash("Event removed.", Alert.success)
     return redirect("")
 
@@ -464,9 +473,9 @@ def viewevent():
         url_params = urllib.urlencode(embed_params)
         start_date=events.get_as_eastern(event.start_date)
         end_date=events.get_as_eastern(event.end_date)
-        if event and users.get_current_user():
+        if event and users.get_current_user() and g.account_id:
             current_apt = events.TimeSlot.query(ancestor=event.key)\
-                .filter(events.TimeSlot.user_id==users.get_current_user().user_id()).get()
+                .filter(events.TimeSlot.user_id==str(g.account_id)).get()
             if current_apt:
                 detail_url = request.base_url + '?eid='+event_id
                 apt_date = (current_apt.start_time).strftime("%Y%m%dT%H%M00Z")\
@@ -505,8 +514,8 @@ def scheduleapt():
     logging.info(request.values.has_key('tsid'))
     logging.info(request.values.has_key('eid'))
     logging.info(users.get_current_user())
-    if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user():
-        user_id = users.get_current_user().user_id()
+    if request.values.has_key('tsid') and request.values.has_key('eid') and g.account_id:
+        user_id = str(g.account_id)
         event_id = request.values['eid']
         apt_id = request.values['tsid']
         time_slot = events.get_time_slot(apt_id, event_id)
@@ -530,9 +539,9 @@ def scheduleapt():
 @app.route("/events/notes", methods=['POST'])
 def updateaptnote():
     event_id = None
-    if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user() \
+    if request.values.has_key('tsid') and request.values.has_key('eid') and g.account_id \
             and request.values.has_key('note'):
-        user_id = users.get_current_user().user_id()
+        user_id = str(g.account_id)
         event_id = request.values['eid']
         apt_id = request.values['tsid']
         time_slot = events.get_time_slot(apt_id, event_id)
