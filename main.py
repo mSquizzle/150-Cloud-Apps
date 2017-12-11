@@ -1,6 +1,5 @@
 import os, re, datetime, urllib, requests, logging
 from functools import wraps, partial
-
 import requests
 from google.appengine.api import mail
 from requests_toolbelt.adapters import appengine
@@ -10,6 +9,8 @@ from flask import Flask, render_template, request, url_for, flash, \
         session, g, redirect, abort
 import datetime
 import urllib
+from google.appengine.ext import ndb
+from google.appengine.api import app_identity, mail
 import json
 from event import events, create, update
 from string import Template
@@ -44,10 +45,25 @@ def get_db():
     return g.connection
 
 def get_maps_key():
-    #todo - turn into environment variable
-    return 'AIzaSyAfvS-E0xWdXEUvCryyyryLZAYNHAlGt5Y'
+    key = os.environ.get('MAPS_KEY')
+    return key
+
+def get_mce_key():
+    key = os.environ.get('MCE_KEY')
+    return key
+
 def get_zipcode_key():
     return '7FhkHmuRBeyrwzqsdnBqZQEJTXVOekSakAs9zD226ePAcfxCT3TypBriarNbaYyW'
+
+def get_id():
+    id = app_identity.get_application_id()
+    if not id:
+        id = os.environ.get('PROJECT_ID')
+    logging.info(os.environ.get('PROJECT_ID'))
+    return id
+
+def get_current_time():
+    return datetime.datetime.now()
 
 # TODO: handle possibility of being logged in as both user types
 @app.before_request
@@ -168,8 +184,18 @@ def unauthorized(e):
 
 @app.route('/')
 def index():
-    event_list = events.list_events()
-    return render_template('index.html', event_list=event_list, current_time=datetime.datetime.now())
+    upcoming_events = events.list_events()
+    event_list = []
+    for event in upcoming_events:
+        date = events.get_as_eastern(event.start_date)
+        event_list.append({
+            'location' : event.location,
+            'date': date.strftime("%B %d, %Y at %I:%M %p"),
+            'start_date' : event.start_date,
+            'end_date' : event.end_date,
+            'key' : event.key
+        })
+    return render_template('index.html', event_list=event_list, current_time=get_current_time())
 
 
 @app.route('/faq')
@@ -337,6 +363,8 @@ def emailadmin():
          report_errors(form.errors)
          return render_template('emailadmin.html', user=users.get_current_user(), \
 				form=form)
+    return render_template('emailadmin.html', user=users.get_current_user(), \
+				form=form, mce_key=get_mce_key())
 
 
   # Flask reuqires a return for every function 
@@ -345,20 +373,18 @@ def emailadmin():
       
 
 @app.route('/dashboard')
-@login_required
+@institution_required
 def dashboard():
-    if g.account_type == 'donor':
-        return ''
-    else:
-        cursor = get_db().cursor()
-        cursor.execute(
-            "SELECT * FROM {} WHERE id=%s".format(g.account_type),
-            (g.account_id,)
-        )
-        return render_template(
-            'dashboard.html',
-            record=cursor.fetchone()
-        )
+    cursor = get_db().cursor()
+    cursor.execute(
+        "SELECT O_neg, O_pos, A_neg, A_pos, B_neg, B_pos, AB_neg, AB_pos "
+        "FROM {} WHERE id=%s".format(g.account_type),
+        (g.account_id,)
+    )
+    return render_template(
+        'dashboard.html',
+        record=cursor.fetchone()
+    )
 
 
 @app.route('/eligibility', methods=["GET", "POST"])
@@ -380,7 +406,7 @@ def eligibility_questionaire():
             flash("Bring list of all your medications with you to the donation location", Alert.info)
             status = "Unknown" if status != "Ineligible" else "Ineligible"
         if form.travel.data == "yes":
-            flash("Bring list of all your travels, including which countries and when", Alert.info)
+            flash("Bring list of all your travels, including which countries you visited, and when", Alert.info)
             status = "Unknown" if status != "Ineligible" else "Ineligible"
         if form.infection.data == "yes":
             flash("Individuals with an infection may not donate blood", Alert.info)
@@ -401,6 +427,11 @@ def createevent():
     #todo - need to be able to extract from the session - not sticking right now
     form = create.Form(inst_id="this_is_a_test")
     if form.validate_on_submit():
+        logging.info(form.start_date.data)
+        # form takes data in utc, we're using eastern times
+        # todo - enable timezone based on user preferences
+        start_date = form.start_date.data + datetime.timedelta(hours=5)
+        end_date = form.end_date.data + datetime.timedelta(hours=5)
         new_event = events.Event(
             inst_id = form.inst_id.data,
             location = form.location.data,
@@ -408,13 +439,13 @@ def createevent():
             num_parallel=1,
             apt_slot=15,
             published=False,
-            start_date=form.start_date.data,
-            end_date = form.end_date.data,
+            start_date= start_date,
+            end_date = end_date,
             scheduled_for_deletion = False
         )
         new_event.put()
-        current_date = new_event.start_date
-        while current_date < form.end_date.data:
+        current_date = start_date
+        while current_date < end_date:
             time_slot = events.TimeSlot(
                 start_time = current_date,
                 can_be_scheduled=True,
@@ -428,19 +459,27 @@ def createevent():
     else:
         if form.errors:
             report_errors(form.errors)
-        return render_template("events/create.html", form=form)
+        return render_template("events/create.html", form=form, api_key=get_maps_key())
 
 @app.route('/events/edit', methods=['GET'])
+@login_required
 def editevent():
     event_id = None
     event= None
     form=None
     event_id = request.args['eid']
     if event_id:
-        event_long = long(event_id)
-        possible_event = events.Event.get_by_id(event_long)
-        event=possible_event
-        form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
+        if g.account_type == 'bank':
+            event_long = long(event_id)
+            possible_event = events.Event.get_by_id(event_long)
+            event=possible_event
+            if possible_event:
+                if possible_event.end_date < get_current_time():
+                    flash("This event is over. It cannot be edited.", Alert.danger)
+                    return redirect(url_for("viewevent", eid=event_id))
+                form = update.Form(inst_id="this_is_a_test", event_id=event_id, location=event.location, description=event.description)
+        else:
+            abort(401)
     else:
         report_errors(form.errors)
     return render_template("events/edit.html", form=form, event=event)
@@ -478,6 +517,11 @@ def deleteevent():
         if possible_event:
             possible_event.scheduled_for_deletion = True
             possible_event.put()
+            time_slots = events.TimeSlot.query(ancestor = possible_event.key)
+            if time_slots:
+                for slot in time_slots:
+                    slot.scheduled_for_deletion = True
+                ndb.put_multi(time_slots)
             flash("Event removed.", Alert.success)
     return redirect("")
 
@@ -493,9 +537,34 @@ def publishevent():
             flash('Event is now available to the public!', Alert.success)
     return redirect(url_for('viewevent', eid=eid))
 
+@app.route('/events/manage')
+def manageevent():
+    offset = 0
+    if(request.values.has_key('offset')):
+        offset = int(request.values['offset'])
+    upcoming_events = events.list_configured_events(10, offset=offset)
+    total_events = events.count_configured_events()
+    event_list = []
+    for event in upcoming_events:
+        date = events.get_as_eastern(event.start_date)
+        event_list.append({
+            'location': event.location,
+            'date': date.strftime("%B %d, %Y at %I:%M %p"),
+            'start_date': event.start_date,
+            'end_date': event.end_date,
+            'is_public' : event.published,
+            'key': event.key,
+            'is_over':event.end_date < get_current_time()
+        })
+    more_events = False
+    return render_template('events/manage.html', event_list=event_list, current_time=get_current_time(), more_events=False)
+
 @app.route("/events/view", methods=['POST', 'GET'])
 def viewevent():
     current_apt=None
+    apt_url=None
+    start_date=None
+    end_date=None
     current_time = datetime.datetime.now()
     if request.values.has_key('eid'):
         event_id = request.values['eid']
@@ -503,6 +572,8 @@ def viewevent():
         event_id = None
     event = None
     url_params=None
+    apt_url=None
+    apt_time=None
     time_slots = None
     if event_id:
         event_long = long(event_id)
@@ -510,10 +581,42 @@ def viewevent():
         event = possible_event
         embed_params = {'key': get_maps_key(), 'q': event.location}
         url_params = urllib.urlencode(embed_params)
-        if event and users.get_current_user():
-            current_apt = events.TimeSlot.query(ancestor=event.key).filter(events.TimeSlot.user_id==users.get_current_user().user_id()).get()
-            time_slots = events.list_open_slots(event)
-    return render_template("events/view.html", event=event, time_slots=time_slots, current_apt=current_apt, url_params=url_params, current_time=current_time)
+        start_date=events.get_as_eastern(event.start_date)
+        end_date=events.get_as_eastern(event.end_date)
+        if event and users.get_current_user() and g.account_id:
+            current_apt = events.TimeSlot.query(ancestor=event.key)\
+                .filter(events.TimeSlot.user_id==str(g.account_id)).get()
+            if current_apt:
+                detail_url = request.base_url + '?eid='+event_id
+                apt_date = (current_apt.start_time).strftime("%Y%m%dT%H%M00Z")\
+                           +"/"+(current_apt.start_time+datetime.timedelta(minutes=30)).strftime("%Y%m%dT%H%M00Z")
+                details = 'For details, see %s' % detail_url
+                params = {
+                    'text' : "Blood Donation Appointment",
+                    'dates' : apt_date,
+                    'details' : details,
+                    'location' : event.location,
+                }
+                apt_url = urllib.urlencode(params)
+                apt_time=events.get_as_eastern(current_apt.start_time)
+            slots = events.list_open_slots(event)
+            time_slots = []
+            for slot in slots:
+                date = events.get_as_eastern(slot.start_time)
+                time_slots.append({
+                    'id' : slot.key.id(),
+                    'date' : date.strftime("%I:%M %p")
+                })
+    return render_template("events/view.html",
+                           event=event,
+                           time_slots=time_slots,
+                           current_apt=current_apt,
+                           url_params=url_params,
+                           current_time=current_time,
+                           apt_url=apt_url,
+                           apt_time=apt_time,
+                           start_date=start_date,
+                           end_date=end_date)
 
 @app.route("/events/schedule", methods=['POST'])
 def scheduleapt():
@@ -521,8 +624,8 @@ def scheduleapt():
     logging.info(request.values.has_key('tsid'))
     logging.info(request.values.has_key('eid'))
     logging.info(users.get_current_user())
-    if request.values.has_key('tsid') and request.values.has_key('eid') and users.get_current_user():
-        user_id = users.get_current_user().user_id()
+    if request.values.has_key('tsid') and request.values.has_key('eid') and g.account_id:
+        user_id = str(g.account_id)
         event_id = request.values['eid']
         apt_id = request.values['tsid']
         time_slot = events.get_time_slot(apt_id, event_id)
@@ -543,6 +646,86 @@ def scheduleapt():
             flash("Unable to find specified timeslot", Alert.danger)
     return redirect(url_for("viewevent", eid=event_id))
 
+@app.route("/events/notes", methods=['POST'])
+def updateaptnote():
+    event_id = None
+    if request.values.has_key('tsid') and request.values.has_key('eid') and g.account_id \
+            and request.values.has_key('note'):
+        user_id = str(g.account_id)
+        event_id = request.values['eid']
+        apt_id = request.values['tsid']
+        time_slot = events.get_time_slot(apt_id, event_id)
+        if time_slot and time_slot.user_id == user_id:
+            time_slot.notes = request.values['note']
+            flash("Updated notes", Alert.success)
+            time_slot.put()
+    return redirect(url_for("viewevent", eid=event_id))
+
+@app.route("/events/tasks/notify")
+def notifiyevent():
+    logging.info("running the event notification hander")
+    events_to_notify = events.get_events_to_notify()
+    sender_address= 'admin@%s.appspotmail.com' % get_id()
+    for event in events_to_notify:
+        time_slots = events.TimeSlot.query(ancestor=event.key)
+        logging.info(event.location)
+        slot_keys = []
+        user_ids = []
+        for slot in time_slots:
+            slot_keys.append(slot.key)
+            logging.info(slot.start_time)
+            logging.info(slot.user_id)
+            if slot.user_id:
+                user_ids.append(slot.user_id)
+                cursor = get_db().cursor()
+                cursor.execute(
+                    "SELECT email FROM donor WHERE id = {}".format(int(slot.user_id))
+                )
+                row = cursor.fetchone()
+                if row:
+                    logging.info("found a user's email")
+                    logging.info(row[0])
+                    email_address=row[0]
+                    start_time = events.get_as_eastern(slot.start_time)
+                    body="This is a notifcation that you have an upcoming blood donation appoinment on {}. " \
+                         "Your appointment will take place at {}. Please make sure to arrive promptly."\
+                        .format(start_time.strftime("%B %d, %Y at %I:%M %p"), event.location)
+                    mail.send_mail(sender=sender_address,
+                                   to=email_address,
+                                   subject="Don't Forget Your Upcoming Donation Appointment!",
+                                   body=body)
+
+                else:
+                    logging.info("could not find user associated with id {}", slot.user_id)
+    return redirect("/"), 200
+
+
+@app.route("/events/tasks/delete")
+def deleteevents():
+    logging.info("running the delete event handler")
+    events_to_delete = events.Event.query().filter(events.Event.scheduled_for_deletion == True).fetch(10)
+    sender_address= 'admin@%s.appspotmail.com' % get_id()
+    for event in events_to_delete:
+        time_slots = events.TimeSlot.query(ancestor=event.key)
+        slot_keys = []
+        for slot in time_slots:
+            slot_keys.append(slot.key)
+            if slot.user_id:
+                cursor = get_db().cursor()
+                cursor.execute(
+                    "SELECT email FROM donor WHERE id = {}".format(int(slot.user_id))
+                )
+                row = cursor.fetchone()
+                if row:
+                    start_time = events.get_as_eastern(event.start_date)
+                    email_address = row[0]
+                    body = "This is a notification that the blood donation event at {} on {} has been cancelled. You are receiving this message beause you are on our records as having an appointment.".format(event.location, start_time.strftime("%B %d, %Y"))
+                    mail.send_mail(sender=sender_address,
+                                   to=email_address,
+                                   subject="Blood Donation Event Cancelled",
+                                   body=body)
+        ndb.delete_multi(slot_keys)
+    return redirect("/"), 200
 
 #### END EVENTS ####
 

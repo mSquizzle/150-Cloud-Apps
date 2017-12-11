@@ -1,4 +1,5 @@
 import datetime
+import pytz
 from google.appengine.ext import ndb
 
 class Event(ndb.Model):
@@ -16,14 +17,19 @@ class Event(ndb.Model):
 def formatted_start_date(event):
     event.start_date.strftime("%B %d, %Y at %I:%M %p")
 
+def get_as_eastern(utc_date):
+    utc_date = utc_date.replace(tzinfo=pytz.timezone("UTC"))
+    return utc_date.astimezone(tz=pytz.timezone("US/Eastern"))
+
 class TimeSlot(ndb.Model):
     user_id = ndb.StringProperty()
     start_time = ndb.DateTimeProperty(required=True)
     can_be_scheduled = ndb.BooleanProperty(default=True)
     event = ndb.KeyProperty(kind=Event, required=True)
     location = ndb.StringProperty()
-    notes = ndb.StringProperty()
+    notes = ndb.TextProperty()
     scheduled_for_deletion = ndb.BooleanProperty(default=False)
+    notified = ndb.BooleanProperty(required=True, default=False)
 
 # need utilities for this
 def list_events(limit=10):
@@ -33,10 +39,21 @@ def list_events(limit=10):
         .filter(Event.published==True)
     return q.fetch(limit)
 
+def list_configured_events(limit=10, offset=0):
+    q = Event.query().order(-Event.end_date)\
+        .filter(Event.scheduled_for_deletion == False)
+    return q.fetch(limit, offset=offset)
+
+def count_configured_events():
+    q = Event.query().order(-Event.end_date) \
+        .filter(Event.scheduled_for_deletion == False)
+    return q.count()
+
 def list_open_slots(event):
     if event:
         q = TimeSlot.query().filter(TimeSlot.event == event.key)\
-            .filter(TimeSlot.can_be_scheduled == True)\
+            .filter(TimeSlot.can_be_scheduled == True) \
+            .filter(TimeSlot.user_id == None) \
             .filter(TimeSlot.scheduled_for_deletion == False)\
             .filter(TimeSlot.start_time > datetime.datetime.now())
         return q.fetch()
@@ -47,3 +64,9 @@ def get_time_slot(tsid, eid):
     parent_key = ndb.Key(Event, int(eid))
     time_slot = TimeSlot.get_by_id(apt_long, parent=parent_key)
     return time_slot
+
+def get_events_to_notify():
+    q = Event.query().filter(Event.start_date > datetime.datetime.now())\
+        .filter(Event.start_date < (datetime.datetime.now()+datetime.timedelta(days=1)))\
+        .filter(Event.published == True).filter(Event.scheduled_for_deletion == False)
+    return q

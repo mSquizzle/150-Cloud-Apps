@@ -3,12 +3,13 @@ api_version: 1
 threadsafe: true
 
 env_variables:
-  CLOUDSQL_PASSWORD: ""
-  CLOUDSQL_CONNECTION_NAME : ""
+  CLOUDSQL_PASSWORD: "NxeyengIc1zgkfst"
+  CLOUDSQL_CONNECTION_NAME : "spring-index-105515:us-east1:mrs"
   CLOUDSQL_USER: "root"
   CLOUDSQL_DATABASE: "mrs"
-  PROJECT_ID: ""
-  ZIPCODE_API_KEY: ""
+  PROJECT_ID: "spring-index-105515"
+  MAPS_KEY: "AIzaSyAfvS-E0xWdXEUvCryyyryLZAYNHAlGt5Y"
+  MCE_KEY : "oi1h5eercka6ep3282vhbmznnqdjusxha5gziqz2weuwxvah"
 
 # [START handlers]
 handlers:

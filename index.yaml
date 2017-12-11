@@ -19,9 +19,26 @@ indexes:
 
 - kind: Event
   properties:
+  - name: published
+  - name: scheduled_for_deletion
+  - name: start_date
+
+- kind: Event
+  properties:
+  - name: scheduled_for_deletion
+  - name: end_date
+
+- kind: Event
+  properties:
   - name: scheduled_for_deletion
   - name: end_date
   - name: start_date
+
+- kind: Event
+  properties:
+  - name: scheduled_for_deletion
+  - name: end_date
+    direction: desc
 
 - kind: Event
   properties:
@@ -33,6 +50,14 @@ indexes:
   - name: can_be_scheduled
   - name: event
   - name: scheduled_for_deletion
+  - name: start_time
+
+- kind: TimeSlot
+  properties:
+  - name: can_be_scheduled
+  - name: event
+  - name: scheduled_for_deletion
+  - name: user_id
   - name: start_time
 
 - kind: TimeSlot

@@ -1,0 +1,8 @@
+cron:
+- description: Delete Event Job
+  url: /events/tasks/delete
+  schedule: every 24 hours
+
+- description: Email Event Job
+  url: /events/tasks/notify
+  schedule: every 24 hours
