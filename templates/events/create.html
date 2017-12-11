@@ -18,6 +18,10 @@
         {{ form.description(class="form-control") }}
     </div>
     <div class="form-group">
+        {{ form.apt_length.label }}:
+        {{ form.apt_length}}
+    </div>
+    <div class="form-group">
         {{ form.start_date.label }}:
         {{ form.start_date(type='datetime-local')}}
     </div>
