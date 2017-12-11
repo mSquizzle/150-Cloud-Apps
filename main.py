@@ -14,7 +14,7 @@ from google.appengine.api import app_identity, mail
 import json
 from event import events, create, update
 from string import Template
-from forms import login, institution, donor, radius, eligibility, email
+from forms import login, institution, donor, radius, eligibility, email, settings
 from event import events, create, update
 
 app = Flask (__name__)
@@ -299,9 +299,23 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
+@app.route('/settings', methods=["GET", "POST"])
+@donor_required
+def update_settings():
+    form = settings.Form()
+    cursor = get_db().cursor()
+    if form.validate_on_submit():
+        cursor.execute(
+            "UPDATE donor SET contact=%s, outreach=%s WHERE id=%s",
+            (form.contact.data, form.outreach.data, g.account_id)
+        )
+        flash("Donor settings updated", Alert.success)
+    report_errors(form.errors)
+    cursor.execute("SELECT contact, outreach FROM donor WHERE id=%s", (g.account_id,))
+    row = cursor.fetchone()
+    form.contact.data = row[0]
+    form.outreach.data = row[1]
+    return render_template('settings.html', form=form)
 
 
 @app.route('/emailadmin', methods=['GET', 'POST'])
