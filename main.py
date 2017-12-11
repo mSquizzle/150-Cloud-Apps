@@ -6,7 +6,7 @@ from requests_toolbelt.adapters import appengine
 from google.appengine.api import users
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, url_for, flash, \
-        session, g, redirect, abort
+        session, g, redirect, abort, Response
 import datetime
 import urllib
 from google.appengine.ext import ndb
@@ -743,6 +743,41 @@ def deleteevents():
                                    body=body)
         ndb.delete_multi(slot_keys)
     return redirect("/"), 200
+
+@app.route("/events/download/aptlist.csv")
+@login_required
+@bank_required
+def download():
+    logging.info("running the csv writer")
+    event_id = None
+    event = None
+    header = ["Time", "Patient ID", "Notes"]
+    if request.values.has_key('eid'):
+        event_id = request.values['eid']
+        event = events.Event.get_by_id(int(event_id))
+    def generate(event):
+        yield ','.join(header)+'\n'
+        if event:
+            time_slots = events.TimeSlot.query(ancestor=event.key)
+            for slot in time_slots:
+                id_string = ""
+                if slot.user_id:
+                    id_string = str(slot.user_id)
+                notes = ""
+                if slot.notes:
+                    notes = slot.notes
+                start_time = events.get_as_eastern(slot.start_time).strftime("%B %d %Y at %I:%M %p")
+                row = [
+                    start_time,
+                    id_string,
+                    """%s""" % notes,
+                ]
+                yield ','.join(row) + '\n'
+        else:
+            yield ',,\n'
+    return Response(generate(event), mimetype='text/csv')
+
+
 
 #### END EVENTS ####
 
