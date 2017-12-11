@@ -13,12 +13,14 @@
                 This event is in progress.
             </div>
         {% endif %}
-        <iframe
-          width="600"
-          height="450"
-          frameborder="0" style="border:0"
-          src="https://www.google.com/maps/embed/v1/place?{{url_params}}" allowfullscreen>
-        </iframe>
+        <div align="center">
+            <iframe
+              width="600"
+              height="450"
+              frameborder="0" style="border:0"
+              src="https://www.google.com/maps/embed/v1/place?{{url_params}}" allowfullscreen>
+            </iframe>
+        </div>
         <div class="event-info" style="border-bottom: 1px solid rgb(238, 238, 238);">
             <h2>Location: {{event.location}}</h2>
             <h3>Start: {{start_date.strftime("%B %d, %Y at %I:%M %p")}} EST</h3>
@@ -75,7 +77,11 @@
                     {% endif %}
                 {% endif %}
             {% else %}
-                <h4>Interested in attending this event? Create an account or sign in.</h4>
+                 {% if event.end_date < current_time %}
+                    <h4>Interested in attending events like this? Create an account or sign in.</h4>
+                 {% else %}
+                    <h4>Interested in attending this event? Create an account or sign in.</h4>
+                 {% endif %}
             {% endif %}
         </div>
     {% else %}
