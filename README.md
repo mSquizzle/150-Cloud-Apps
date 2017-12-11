@@ -52,7 +52,16 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
 For the last step, you need to be running the Cloud SQL proxy. This can be done by running: `cloud_sql_proxy -instances=<PROJECT_ID>:<REGION>:<INSTANCE_ID>=tcp:3306` (although the `cloud_sql_proxy` program may have to be invoked differently depending on how you installed it)
 
 ### API Keys
-- TODO: Google Maps API key info
+- In order to the Map embed and the Autocomplete box to work for events, you will need to have a valid Google Maps Key.
+  1. In the application console under APIs, enable the Google Map Javascript and Google Map Embed APIs for your application.
+  2. Generate an API key under credentials. For production you may want to limit the how this key is used, but for local development, no restrictions should be needed.
+  3. In app.yaml, set the MAPS_KEY environment variable to the newly generated API key.
+- The RTE in the email admin is powered by [TinyMCE](https://www.tinymce.com/). You will need to obtain a key in order to use it.
+  1. Login to TinyMCE or create a new account.
+  2. If you do not already have a key, start a free trial to create one.
+  3. Once the key has been generated, go to API Key Manager, and click the manage button next to your new key.
+  4. Follow their prompts to whitelist any IP and port combinations where you will be running this application.
+  5. In app.yaml, set the MCE_KEY environment variable to your API key.
 - TODO: Zip code API key info goes here
 
 ### Development Server
