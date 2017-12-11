@@ -8,6 +8,7 @@ env_variables:
   CLOUDSQL_USER: "root"
   CLOUDSQL_DATABASE: "mrs"
   PROJECT_ID: ""
+  MAPS_KEY: ""
 
 
 # [START handlers]

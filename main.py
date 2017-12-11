@@ -9,6 +9,7 @@ from flask import Flask, render_template, request, url_for, flash, \
 import datetime
 import urllib
 from google.appengine.ext import ndb
+from google.appengine.api import app_identity, mail
 
 from forms import login, institution, donor, radius, eligibility
 from event import events, create, update
@@ -41,8 +42,8 @@ def get_db():
     return g.connection
 
 def get_maps_key():
-    #todo - turn into environment variable
-    return 'AIzaSyAfvS-E0xWdXEUvCryyyryLZAYNHAlGt5Y'
+    key = os.environ.get('MAPS_KEY')
+    return key
 
 def get_current_time():
     return datetime.datetime.now()
@@ -353,6 +354,7 @@ def createevent():
         return render_template("events/create.html", form=form, api_key=get_maps_key())
 
 @app.route('/events/edit', methods=['GET'])
+@login_required
 def editevent():
     event_id = None
     event= None
@@ -551,6 +553,71 @@ def updateaptnote():
             time_slot.put()
     return redirect(url_for("viewevent", eid=event_id))
 
+@app.route("/events/tasks/notify")
+def notifiyevent():
+    logging.info("running the event notification hander")
+    events_to_notify = events.get_events_to_notify()
+    sender_address= app_identity.get_application_id()+'@appspot.gserviceaccount.com'
+    for event in events_to_notify:
+        time_slots = events.TimeSlot.query(ancestor=event.key)
+        logging.info(event.location)
+        slot_keys = []
+        user_ids = []
+        for slot in time_slots:
+            slot_keys.append(slot.key)
+            logging.info(slot.start_time)
+            logging.info(slot.user_id)
+            if slot.user_id:
+                user_ids.append(slot.user_id)
+                cursor = get_db().cursor()
+                cursor.execute(
+                    "SELECT email FROM donor WHERE id = {}".format(int(slot.user_id))
+                )
+                row = cursor.fetchone()
+                if row:
+                    logging.info("found a user's email")
+                    logging.info(row[0])
+                    email_address=row[0]
+                    start_time = events.get_as_eastern(slot.start_time)
+                    body="This is a notifcation that you have an upcoming blood donation appoinment on {}. " \
+                         "Your appointment will take place at {}. Please make sure to arrive promptly."\
+                        .format(start_time.strftime("%B %d, %Y at %I:%M %p"), event.location)
+                    mail.send_mail(sender=sender_address,
+                                   to=email_address,
+                                   subject="Don't Forget Your Upcoming Donation Appointment!",
+                                   body=body)
+
+                else:
+                    logging.info("could not find user associated with id {}", slot.user_id)
+    return redirect("/"), 200
+
+
+@app.route("/events/tasks/delete")
+def deleteevents():
+    logging.info("running the delete event handler")
+    events_to_delete = events.Event.query().filter(events.Event.scheduled_for_deletion == True).fetch(10)
+    sender_address =  app_identity.get_application_id()+'@appspot.gserviceaccount.com>'
+    for event in events_to_delete:
+        time_slots = events.TimeSlot.query(ancestor=event.key)
+        slot_keys = []
+        for slot in time_slots:
+            slot_keys.append(slot.key)
+            if slot.user_id:
+                cursor = get_db().cursor()
+                cursor.execute(
+                    "SELECT email FROM donor WHERE id = {}".format(int(slot.user_id))
+                )
+                row = cursor.fetchone()
+                if row:
+                    start_time = events.get_as_eastern(event.start_date)
+                    email_address = row[0]
+                    body = "This is a notification that the blood donation event at {} on {} has been cancelled. You are receiving this message beause you are on our records as having an appointment.".format(event.location, start_time.strftime("%B %d, %Y"))
+                    mail.send_mail(sender=sender_address,
+                                   to=email_address,
+                                   subject="Blood Donation Event Cancelled",
+                                   body=body)
+        ndb.delete_multi(slot_keys)
+    return redirect("/"), 200
 
 #### END EVENTS ####
 

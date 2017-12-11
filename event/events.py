@@ -29,6 +29,7 @@ class TimeSlot(ndb.Model):
     location = ndb.StringProperty()
     notes = ndb.TextProperty()
     scheduled_for_deletion = ndb.BooleanProperty(default=False)
+    notified = ndb.BooleanProperty(required=True, default=False)
 
 # need utilities for this
 def list_events(limit=10):
@@ -63,3 +64,9 @@ def get_time_slot(tsid, eid):
     parent_key = ndb.Key(Event, int(eid))
     time_slot = TimeSlot.get_by_id(apt_long, parent=parent_key)
     return time_slot
+
+def get_events_to_notify():
+    q = Event.query().filter(Event.start_date > datetime.datetime.now())\
+        .filter(Event.start_date < (datetime.datetime.now()+datetime.timedelta(days=1)))\
+        .filter(Event.published == True).filter(Event.scheduled_for_deletion == False)
+    return q
