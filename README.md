@@ -67,6 +67,8 @@ Note that for Windows users, you may run into issues related to Flask. If you ar
   2. From there, click the button "Free Key" to register for a free key
   3. Activate your registration following the prompts 
   4. Follow the steps to register and then set the "ZIPCODE_API_KEY" variable in apps.yaml to your API key 
+  5. Note: The free version only allows 50 requests/hour
+  
 
 ### Development Server
 Once the libraries, database, database proxy, and API keys are setup the application can be started with `dev_appserver.py app.yaml`. Flask debugging is set when run locally although Google does not play nicely with this. 
